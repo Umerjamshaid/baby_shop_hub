@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "852109772686",
+    "project_id": "umerj-6a559",
+    "storage_bucket": "umerj-6a559.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852109772686:android:6a5e4ae5a0ec23d6c186df",
+        "android_client_info": {
+          "package_name": "com.example.baby_shophub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "852109772686-uv0834gr4br6f8b0c51i755q4ftt22nb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPvraUcA5G1U1rvzjSO6kFQ7QnKavw-mM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "852109772686-uv0834gr4br6f8b0c51i755q4ftt22nb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "852109772686-4122q9c9mqs44df9ektqvgj78r19p4c0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cruds"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
