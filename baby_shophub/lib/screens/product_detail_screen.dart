@@ -5,6 +5,8 @@ import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/product_model.dart';
 import '../widgets/common/app_button.dart';
+import '../widgets/product/reviews_list.dart';
+import 'add_review_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -149,6 +151,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           // Quantity Selector
                           if (widget.product.inStock) _buildQuantitySelector(),
                           const SizedBox(height: 24),
+                          // 👇 Reviews Section Inserted Here
+                          const Divider(),
+                          const SizedBox(height: 24),
+
+                          // Reviews List
+                          ReviewsList(productId: widget.product.id),
+
+                          // Add Review Button
+                          if (authProvider.currentUser != null) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddReviewScreen(
+                                      product: widget.product,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text('Write a Review'),
+                            ),
+                          ],
                         ],
                       ),
                     ),

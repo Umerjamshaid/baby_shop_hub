@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/validators.dart';
 import '../../widgets/common/app_button.dart';
+import '../admin/admin_login_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -51,11 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 40),
               // Logo and title
-              Image.asset(
-                'assets/images/omen.jpg',
-                width: 120,
-                height: 120,
-              ),
+              Image.asset('assets/images/omen.jpg', width: 120, height: 120),
               const SizedBox(height: 20),
               Text(
                 'Welcome to BabyShopHub',
@@ -114,7 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ForgotPasswordScreen(),
+                              builder: (context) =>
+                                  const ForgotPasswordScreen(),
                             ),
                           );
                         },
@@ -172,6 +170,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text('Sign Up'),
                   ),
                 ],
+              ),
+              const SizedBox(height: 20),
+
+              // Add to your main app somewhere (like settings or profile)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Admin Portal'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                  );
+                },
               ),
             ],
           ),

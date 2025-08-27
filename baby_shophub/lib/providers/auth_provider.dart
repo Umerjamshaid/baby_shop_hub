@@ -14,154 +14,155 @@ class AuthProvider with ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isAdmin => _currentUser?.isAdministrator ?? false;
 
-  // Check login status - UPDATED
+  // ---- Helpers ----
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  void _setError(String? message) {
+    _error = message;
+    notifyListeners();
+  }
+
+  // ---- Auth Methods ----
+
   Future<bool> checkLoginStatus() async {
-    _isLoading = true;
-    _error = null;
+    _setLoading(true);
+    _setError(null);
 
     try {
-      bool isLoggedIn = await _authService.isLoggedIn();
+      final isLoggedIn = await _authService.isLoggedIn();
       if (isLoggedIn) {
         _currentUser = await _authService.getCurrentUserData();
       }
-      _isLoading = false;
       return isLoggedIn;
     } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
+      _setError(e.toString());
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Sign up with email and password - UPDATED
-  Future<bool> signUp(String email, String password, String name, String? phone) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  Future<bool> signUp(
+    String email,
+    String password,
+    String name,
+    String? phone, {
+    String role = 'user',
+  }) async {
+    _setLoading(true);
+    _setError(null);
 
-    print('AuthProvider: Starting sign up process');
+    debugPrint('AuthProvider: Starting sign up process');
 
     try {
-      UserModel? user = await _authService.signUpWithEmail(email, password, name, phone);
+      final user = await _authService.signUpWithEmail(
+        email,
+        password,
+        name,
+        phone,
+      );
+
       if (user != null) {
         _currentUser = user;
-        _isLoading = false;
-        notifyListeners();
-        print('AuthProvider: Sign up successful');
+        debugPrint('AuthProvider: Sign up successful');
         return true;
       }
-      _error = "Failed to create account";
-      _isLoading = false;
-      notifyListeners();
-      print('AuthProvider: Sign up failed - user is null');
+
+      _setError("Failed to create account");
+      debugPrint('AuthProvider: Sign up failed - user is null');
       return false;
     } on FirebaseAuthException catch (e) {
-      _error = _getErrorMessage(e.code);
-      _isLoading = false;
-      notifyListeners();
-      print('AuthProvider: Firebase error during sign up: ${e.code} - ${e.message}');
+      _setError(_getErrorMessage(e.code));
+      debugPrint(
+        'AuthProvider: Firebase error during sign up: ${e.code} - ${e.message}',
+      );
       return false;
     } catch (e) {
-      _error = "An unexpected error occurred";
-      _isLoading = false;
-      notifyListeners();
-      print('AuthProvider: Unexpected error during sign up: $e');
+      _setError("An unexpected error occurred");
+      debugPrint('AuthProvider: Unexpected error during sign up: $e');
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Sign in with email and password - UPDATED
   Future<bool> signIn(String email, String password) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    _setLoading(true);
+    _setError(null);
 
     try {
-      UserModel? user = await _authService.signInWithEmail(email, password);
+      final user = await _authService.signInWithEmail(email, password);
       if (user != null) {
         _currentUser = user;
-        _isLoading = false;
-        notifyListeners();
+        if (user.isAdministrator) {
+          debugPrint('Admin user logged in');
+        }
         return true;
       }
-      _error = "Invalid email or password";
-      _isLoading = false;
-      notifyListeners();
+
+      _setError("Invalid email or password");
       return false;
     } on FirebaseAuthException catch (e) {
-      _error = _getErrorMessage(e.code);
-      _isLoading = false;
-      notifyListeners();
+      _setError(_getErrorMessage(e.code));
       return false;
     } catch (e) {
-      _error = "An unexpected error occurred";
-      _isLoading = false;
-      notifyListeners();
+      _setError("An unexpected error occurred");
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Sign out - UPDATED
   Future<void> signOut() async {
-    _isLoading = true;
-    notifyListeners();
-
+    _setLoading(true);
     try {
       await _authService.signOut();
       _currentUser = null;
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
-      _error = "Failed to sign out";
-      _isLoading = false;
-      notifyListeners();
+      _setError("Failed to sign out");
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Reset password - UPDATED
   Future<bool> resetPassword(String email) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    _setLoading(true);
+    _setError(null);
 
     try {
       await _authService.resetPassword(email);
-      _isLoading = false;
-      notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
-      _error = _getErrorMessage(e.code);
-      _isLoading = false;
-      notifyListeners();
+      _setError(_getErrorMessage(e.code));
       return false;
     } catch (e) {
-      _error = "Failed to send reset email";
-      _isLoading = false;
-      notifyListeners();
+      _setError("Failed to send reset email");
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Update user profile - UPDATED
   Future<void> updateProfile(UserModel user) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    _setLoading(true);
+    _setError(null);
 
     try {
       await _authService.updateUserProfile(user);
       _currentUser = user;
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
-      _error = "Failed to update profile";
-      _isLoading = false;
-      notifyListeners();
+      _setError("Failed to update profile");
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // Helper method to get user-friendly error messages
+  // ---- Error Helper ----
   String _getErrorMessage(String errorCode) {
     switch (errorCode) {
       case 'weak-password':
@@ -183,9 +184,5 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
-  }
+  void clearError() => _setError(null);
 }

@@ -5,6 +5,8 @@ class AppButton extends StatelessWidget {
   final String text;
   final double? width;
   final String variant; // 'primary', 'secondary', 'outline'
+  final String? size; // 'small', 'medium', 'large'
+  final Color? color; // Custom color
 
   const AppButton({
     super.key,
@@ -12,6 +14,8 @@ class AppButton extends StatelessWidget {
     required this.text,
     this.width,
     this.variant = 'primary',
+    this.size,
+    this.color,
   });
 
   @override
@@ -21,6 +25,9 @@ class AppButton extends StatelessWidget {
     Color backgroundColor;
     Color foregroundColor;
     Color borderColor;
+    double verticalPadding;
+    double horizontalPadding;
+    double fontSize;
 
     switch (variant) {
       case 'secondary':
@@ -37,7 +44,46 @@ class AppButton extends StatelessWidget {
         backgroundColor = theme.primaryColor;
         foregroundColor = Colors.white;
         borderColor = theme.primaryColor;
+
     }
+    // Set size-based properties
+    switch (size) {
+      case 'small':
+        verticalPadding = 8;
+        horizontalPadding = 16;
+        fontSize = 14;
+        break;
+      case 'large':
+        verticalPadding = 16;
+        horizontalPadding = 32;
+        fontSize = 18;
+        break;
+      default: // medium
+        verticalPadding = 12;
+        horizontalPadding = 24;
+        fontSize = 16;
+    }
+
+
+
+
+    switch (variant) {
+      case 'secondary':
+        backgroundColor = color ?? theme.colorScheme.secondary;
+        foregroundColor = Colors.white;
+        borderColor = color ?? theme.colorScheme.secondary;
+        break;
+      case 'outline':
+        backgroundColor = Colors.transparent;
+        foregroundColor = color ?? theme.primaryColor;
+        borderColor = color ?? theme.primaryColor;
+        break;
+      default: // primary
+        backgroundColor = color ?? theme.primaryColor;
+        foregroundColor = Colors.white;
+        borderColor = color ?? theme.primaryColor;
+    }
+
 
     return SizedBox(
       width: width,
@@ -54,10 +100,7 @@ class AppButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
     );

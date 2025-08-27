@@ -8,6 +8,8 @@ class AppConstants {
   static const String categoriesCollection = 'categories';
   static const String ordersCollection = 'orders';
   static const String cartCollection = 'cart';
+  // Add to AppConstants class
+  static const String reviewsCollection = 'reviews';
 
   // Storage paths
   static const String userImagesPath = 'user_images';

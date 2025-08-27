@@ -41,11 +41,7 @@ android {
         }
     }
 }
-dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
-    implementation platform('com.google.firebase:firebase-bom:32.3.1')
-    // Ensure you have the latest versions
-}
+
 
 
 

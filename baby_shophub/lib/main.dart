@@ -10,6 +10,9 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/admin/admin_login_screen.dart';
+import 'screens/admin/analytics_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/local_storage.dart';
@@ -43,6 +46,9 @@ class MyApp extends StatelessWidget {
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const HomeScreen(),
           '/order-confirmation': (context) => const OrderConfirmationScreen(),
+          '/admin-login': (context) => AdminLoginScreen(),
+          '/admin-dashboard': (context) => AdminDashboardScreen(),
+          '/analytics': (context) => AnalyticsScreen(),
         },
       ),
     );

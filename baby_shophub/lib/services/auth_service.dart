@@ -16,18 +16,17 @@ class AuthService {
 
   // Sign up with email and password - UPDATED with better error handling
   Future<UserModel?> signUpWithEmail(
-      String email,
-      String password,
-      String name,
-      String? phone,
-      ) async {
+    String email,
+    String password,
+    String name,
+    String? phone, {
+    String role = 'user',
+  }) async {
     try {
       print('Starting sign up process for: $email');
 
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       print('User created successfully: ${userCredential.user?.uid}');
 

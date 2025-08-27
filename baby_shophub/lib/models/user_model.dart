@@ -10,6 +10,8 @@ class UserModel {
   final DateTime? updatedAt;
   final List<Address> addresses;
   final List<String> favoriteProducts;
+  final bool isAdmin; // Boolean flag
+  final String role;  // Role string (user, admin, etc.)
 
   UserModel({
     required this.id,
@@ -21,6 +23,8 @@ class UserModel {
     this.updatedAt,
     this.addresses = const [],
     this.favoriteProducts = const [],
+    this.isAdmin = false,
+    this.role = 'user',
   });
 
   Map<String, dynamic> toMap() {
@@ -34,6 +38,8 @@ class UserModel {
       'updatedAt': updatedAt?.toIso8601String(),
       'addresses': addresses.map((address) => address.toMap()).toList(),
       'favoriteProducts': favoriteProducts,
+      'isAdmin': isAdmin,
+      'role': role,
     };
   }
 
@@ -47,22 +53,30 @@ class UserModel {
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
       addresses: List<Address>.from(
-        map['addresses']?.map((x) => Address.fromMap(x)) ?? [],
+        (map['addresses'] as List? ?? []).map((x) => Address.fromMap(x)),
       ),
       favoriteProducts: List<String>.from(map['favoriteProducts'] ?? []),
+      isAdmin: map['isAdmin'] ?? false,
+      role: map['role'] ?? 'user',
     );
   }
 
-  // Helper to get default address
+  // ✅ Unified check for admin
+  bool get isAdministrator => isAdmin || role == 'admin';
+
+  // ✅ Role check helper
+  bool hasRole(String roleName) => role == roleName;
+
+  // ✅ Default address getter
   Address? get defaultAddress {
-    try {
-      return addresses.firstWhere((address) => address.isDefault);
-    } catch (e) {
-      return addresses.isNotEmpty ? addresses[0] : null;
-    }
+    if (addresses.isEmpty) return null;
+    return addresses.firstWhere(
+          (a) => a.isDefault,
+      orElse: () => addresses.first,
+    );
   }
 
-  // Copy with method for updates
+  // ✅ CopyWith
   UserModel copyWith({
     String? id,
     String? email,
@@ -73,6 +87,8 @@ class UserModel {
     DateTime? updatedAt,
     List<Address>? addresses,
     List<String>? favoriteProducts,
+    bool? isAdmin,
+    String? role,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -84,6 +100,8 @@ class UserModel {
       updatedAt: updatedAt ?? this.updatedAt,
       addresses: addresses ?? this.addresses,
       favoriteProducts: favoriteProducts ?? this.favoriteProducts,
+      isAdmin: isAdmin ?? this.isAdmin,
+      role: role ?? this.role,
     );
   }
 }
@@ -135,12 +153,10 @@ class Address {
     );
   }
 
-  // Helper to format full address
-  String get fullAddress {
-    return '$street, $city, $state $zipCode';
-  }
+  // ✅ Full address text
+  String get fullAddress => '$street, $city, $state $zipCode';
 
-  // Copy with method for updates
+  // ✅ Copy with
   Address copyWith({
     String? id,
     String? name,
@@ -162,11 +178,12 @@ class Address {
       isDefault: isDefault ?? this.isDefault,
     );
   }
-  // In the UserModel's Address class, add:
+
+  // ✅ Conversion helper for orders
   ShippingAddress toShippingAddress() {
     return ShippingAddress(
       id: id,
-      fullName: name,  // Convert 'name' to 'fullName'
+      fullName: name,
       phone: phone,
       street: street,
       city: city,

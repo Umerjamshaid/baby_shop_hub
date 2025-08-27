@@ -408,7 +408,7 @@ class _HomeContentState extends State<HomeContent> {
     final featuredProducts = productProvider.featuredProducts.take(4).toList();
 
     return SizedBox(
-      height: 220,
+      height: 240, // Increased height to accommodate content
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: featuredProducts.isEmpty ? 4 : featuredProducts.length,
@@ -457,42 +457,48 @@ class _HomeContentState extends State<HomeContent> {
               child: Icon(Icons.image, color: Colors.grey[400], size: 40),
             ),
           ),
-          // Product Details
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 4),
-                Text(price,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF6B73FF))),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B73FF).withOpacity(0.1),
-                      foregroundColor: const Color(0xFF6B73FF),
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () {
-                      // Add to cart functionality
-                    },
-                    child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+          // Product Details - Using Expanded to prevent overflow
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500)),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(price,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6B73FF))),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 32, // Fixed button height
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B73FF).withOpacity(0.1),
+                        foregroundColor: const Color(0xFF6B73FF),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Add to cart functionality
+                      },
+                      child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
