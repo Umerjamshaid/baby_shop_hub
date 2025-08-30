@@ -315,7 +315,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
           const SizedBox(height: 24),
           AppButton(
             onPressed: () {
-              Navigator.pop(context); // Go back to home
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home', // Make sure you registered HomeScreen with this route
+                    (route) => false, // Clears all previous routes
+              );
             },
             text: 'Start Shopping',
           ),

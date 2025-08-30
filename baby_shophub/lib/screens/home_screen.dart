@@ -5,10 +5,13 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/product_model.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
 import 'products_list_screen.dart';
-import 'orders_screen.dart'; // Add orders screen import
+import 'orders_screen.dart';
+import 'product_detail_screen.dart';
+import 'advanced_search_screen.dart'; // Add this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProductsListScreen(),
     const CartScreen(),
     const ProfileScreen(),
-    const OrdersScreen(), // Add orders screen
+    const OrdersScreen(),
   ];
 
   @override
@@ -33,21 +36,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: _buildAppBar(),
-      body: _safeGetScreen(_currentIndex), // Use safe method
+      body: _safeGetScreen(_currentIndex),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  // Safe screen getter to prevent index errors
   Widget _safeGetScreen(int index) {
     if (index >= 0 && index < _screens.length) {
       return _screens[index];
     }
-    return _screens[0]; // Fallback to first screen
+    return _screens[0];
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: Colors.white,
       elevation: 0.5,
       centerTitle: false,
@@ -58,9 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 20)),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search, color: Colors.black54),
+          icon: const Icon(Icons.search, size: 28),
           onPressed: () {
-            // Implement search functionality
+            showSearch(
+              context: context,
+              delegate: AdvancedSearchDelegate(),
+            );
           },
         ),
         Consumer<CartProvider>(
@@ -71,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black54),
                   onPressed: () {
                     setState(() {
-                      _currentIndex = 2.clamp(0, _screens.length - 1); // Safe navigation to cart
+                      _currentIndex = 2.clamp(0, _screens.length - 1);
                     });
                   },
                 ),
@@ -125,10 +131,10 @@ class _HomeScreenState extends State<HomeScreen> {
           topRight: Radius.circular(16),
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex.clamp(0, _screens.length - 1), // Clamp index
+          currentIndex: _currentIndex.clamp(0, _screens.length - 1),
           onTap: (index) {
             setState(() {
-              _currentIndex = index.clamp(0, _screens.length - 1); // Clamp index
+              _currentIndex = index.clamp(0, _screens.length - 1);
             });
           },
           type: BottomNavigationBarType.fixed,
@@ -170,6 +176,142 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// AdvancedSearchDelegate class
+class AdvancedSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+          },
+        ),
+      IconButton(
+        icon: const Icon(Icons.tune),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdvancedSearchScreen(
+                initialCategory: null,
+              ),
+            ),
+          );
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return ProductsListScreen(searchQuery: query);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return FutureBuilder<List<String>>(
+      future: Provider.of<ProductProvider>(context, listen: false)
+          .getSearchSuggestions(query),
+      builder: (context, snapshot) {
+        if (query.isEmpty) {
+          return _buildPopularSearches(context);
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || snapshot.data == null) {
+          return const Center(child: Text('Error loading suggestions'));
+        }
+
+        final suggestions = snapshot.data!;
+
+        if (suggestions.isEmpty) {
+          return const Center(child: Text('No suggestions found'));
+        }
+
+        return ListView.builder(
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = suggestions[index];
+            return ListTile(
+              leading: const Icon(Icons.search),
+              title: Text(suggestion),
+              onTap: () {
+                query = suggestion;
+                showResults(context);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPopularSearches(BuildContext context) {
+    return FutureBuilder<List<String>>(
+      future: Provider.of<ProductProvider>(context, listen: false)
+          .getPopularSearches(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || snapshot.data == null) {
+          return const Center(child: Text('Error loading popular searches'));
+        }
+
+        final popularSearches = snapshot.data!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Popular Searches',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: popularSearches.length,
+                itemBuilder: (context, index) {
+                  final search = popularSearches[index];
+                  return ListTile(
+                    leading: const Icon(Icons.trending_up),
+                    title: Text(search),
+                    onTap: () {
+                      query = search;
+                      showResults(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
@@ -181,7 +323,6 @@ class _HomeContentState extends State<HomeContent> {
   @override
   void initState() {
     super.initState();
-    // Use post-frame callback to avoid Provider calls during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -223,25 +364,18 @@ class _HomeContentState extends State<HomeContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Promo Banner
                 _buildPromoBanner(),
                 const SizedBox(height: 24),
-
-                // Categories
                 const Text('Categories',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 _buildCategoryGrid(),
                 const SizedBox(height: 24),
-
-                // Featured Products
                 const Text('Featured Products',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 _buildFeaturedProducts(productProvider),
                 const SizedBox(height: 24),
-
-                // View All Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -404,28 +538,141 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   Widget _buildFeaturedProducts(ProductProvider productProvider) {
-    // Use actual featured products from your provider
     final featuredProducts = productProvider.featuredProducts.take(4).toList();
 
     return SizedBox(
-      height: 240, // Increased height to accommodate content
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: featuredProducts.isEmpty ? 4 : featuredProducts.length,
         itemBuilder: (context, index) {
           if (featuredProducts.isEmpty) {
-            // Placeholder while loading
-            return _buildProductItem('Loading...', '\$0.00');
+            return _buildProductPlaceholder();
           }
 
           final product = featuredProducts[index];
-          return _buildProductItem(product.name, '\$${product.price.toStringAsFixed(2)}');
+          return _buildProductItem(product);
         },
       ),
     );
   }
 
-  Widget _buildProductItem(String name, String price) {
+  Widget _buildProductItem(Product product) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: product),
+          ),
+        );
+      },
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image - FIXED: Using actual product image
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                color: Colors.grey[200],
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: Image.network(
+                  product.firstImage,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(Icons.image, color: Colors.grey[400], size: 40),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Product Details
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w500)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(product.formattedPrice,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF6B73FF))),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 32,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B73FF).withOpacity(0.1),
+                          foregroundColor: const Color(0xFF6B73FF),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Add to cart functionality
+                        },
+                        child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductPlaceholder() {
     return Container(
       width: 150,
       margin: const EdgeInsets.only(right: 16),
@@ -443,7 +690,6 @@ class _HomeContentState extends State<HomeContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image
           Container(
             height: 120,
             decoration: BoxDecoration(
@@ -457,7 +703,6 @@ class _HomeContentState extends State<HomeContent> {
               child: Icon(Icons.image, color: Colors.grey[400], size: 40),
             ),
           ),
-          // Product Details - Using Expanded to prevent overflow
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -465,36 +710,23 @@ class _HomeContentState extends State<HomeContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Flexible(
-                    child: Text(name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500)),
+                  Container(
+                    height: 16,
+                    width: 100,
+                    color: Colors.grey[300],
                   ),
-                  const SizedBox(height: 4),
-                  Text(price,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF6B73FF))),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 32, // Fixed button height
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B73FF).withOpacity(0.1),
-                        foregroundColor: const Color(0xFF6B73FF),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {
-                        // Add to cart functionality
-                      },
-                      child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                  Container(
+                    height: 14,
+                    width: 60,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ],
@@ -583,6 +815,7 @@ class _HomeContentState extends State<HomeContent> {
                   BoxShadow(
                     color: const Color(0xFFFF6B9D).withOpacity(0.3),
                     blurRadius: 15,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),

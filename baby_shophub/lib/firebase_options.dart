@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -53,10 +50,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAPvraUcA5G1U1rvzjSO6kFQ7QnKavw-mM',
-    appId: '1:852109772686:android:6a5e4ae5a0ec23d6c186df',
-    messagingSenderId: '852109772686',
-    projectId: 'umerj-6a559',
-    storageBucket: 'umerj-6a559.firebasestorage.app',
+    apiKey: 'AIzaSyB5vPtF80YreLTjnxj2DYuQ9gyZVR3f-Yk',
+    appId: '1:93624205799:android:4f7a852b5712018ab53d42',
+    messagingSenderId: '93624205799',
+    projectId: 'baby-shop-hub-a04d1',
+    storageBucket: 'baby-shop-hub-a04d1.firebasestorage.app',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCx7LoQOJBFcfTGZTJzrwtZ028l9OjaxRg',
+    appId: '1:93624205799:web:cd5a038ca39aefe0b53d42',
+    messagingSenderId: '93624205799',
+    projectId: 'baby-shop-hub-a04d1',
+    authDomain: 'baby-shop-hub-a04d1.firebaseapp.com',
+    storageBucket: 'baby-shop-hub-a04d1.firebasestorage.app',
+    measurementId: 'G-5CXTFKV63L',
+  );
+
 }

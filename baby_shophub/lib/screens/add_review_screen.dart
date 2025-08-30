@@ -150,23 +150,14 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Info
             _buildProductInfo(),
             const SizedBox(height: 24),
-
-            // Rating
             _buildRatingSection(),
             const SizedBox(height: 24),
-
-            // Review Comment
             _buildCommentSection(),
             const SizedBox(height: 24),
-
-            // Image Upload
             _buildImageUploadSection(),
             const SizedBox(height: 32),
-
-            // Submit Button
             AppButton(
               onPressed: _submitReview,
               text: 'Submit Review',
@@ -295,8 +286,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           style: TextStyle(color: Colors.grey, fontSize: 14),
         ),
         const SizedBox(height: 12),
-
-        // Selected Images
         if (_selectedImages.isNotEmpty) ...[
           SizedBox(
             height: 100,
@@ -340,8 +329,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           ),
           const SizedBox(height: 12),
         ],
-
-        // Upload Button
         OutlinedButton(
           onPressed: _pickImages,
           style: OutlinedButton.styleFrom(
@@ -390,7 +377,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final user = authProvider.currentUser!;
 
-        // Upload images if any
         if (_selectedImages.isNotEmpty) {
           _imageUrls = await _reviewService.uploadReviewImages(
             'review_${DateTime.now().millisecondsSinceEpoch}',
@@ -398,7 +384,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           );
         }
 
-        // Create review
         final review = Review(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           userId: user.id,
@@ -410,10 +395,9 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           comment: _commentController.text.trim(),
           imageUrls: _imageUrls,
           createdAt: DateTime.now(),
-          isVerifiedPurchase: true,
+          isVerifiedPurchase: _hasPurchased, // ✅ now dynamic
         );
 
-        // Save review
         await _reviewService.addReview(review);
 
         ScaffoldMessenger.of(context).showSnackBar(

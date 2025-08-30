@@ -14,6 +14,14 @@ class Product {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  // Filtering properties
+  final List<String> sizes;
+  final List<String> colors;
+  final List<String> materials;
+  final bool isEcoFriendly;
+  final bool isOrganic;
+  final double discountPercentage;
+
   Product({
     required this.id,
     required this.name,
@@ -29,6 +37,12 @@ class Product {
     this.isFeatured = false,
     required this.createdAt,
     this.updatedAt,
+    this.sizes = const [],
+    this.colors = const [],
+    this.materials = const [],
+    this.isEcoFriendly = false,
+    this.isOrganic = false,
+    this.discountPercentage = 0.0,
   });
 
   Map<String, dynamic> toMap() {
@@ -47,6 +61,12 @@ class Product {
       'isFeatured': isFeatured,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'sizes': sizes,
+      'colors': colors,
+      'materials': materials,
+      'isEcoFriendly': isEcoFriendly,
+      'isOrganic': isOrganic,
+      'discountPercentage': discountPercentage,
     };
   }
 
@@ -55,26 +75,36 @@ class Product {
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',
-      price: map['price']?.toDouble() ?? 0.0,
+      price: (map['price'] ?? 0).toDouble(),
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
       category: map['category'] ?? '',
       brand: map['brand'] ?? '',
       ageRange: map['ageRange'] ?? '',
-      stock: map['stock']?.toInt() ?? 0,
-      rating: map['rating']?.toDouble() ?? 0.0,
-      reviewCount: map['reviewCount']?.toInt() ?? 0,
+      stock: (map['stock'] ?? 0).toInt(),
+      rating: (map['rating'] ?? 0).toDouble(),
+      reviewCount: (map['reviewCount'] ?? 0).toInt(),
       isFeatured: map['isFeatured'] ?? false,
-      createdAt: DateTime.parse(map['createdAt']),
-      updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.tryParse(map['createdAt']) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.tryParse(map['updatedAt'])
+          : null,
+      sizes: List<String>.from(map['sizes'] ?? []),
+      colors: List<String>.from(map['colors'] ?? []),
+      materials: List<String>.from(map['materials'] ?? []),
+      isEcoFriendly: map['isEcoFriendly'] ?? false,
+      isOrganic: map['isOrganic'] ?? false,
+      discountPercentage: (map['discountPercentage'] ?? 0).toDouble(),
     );
   }
 
-  // Helper method to check if product is in stock
+  // 🔹 Helper Getters
+  bool get isOnSale => discountPercentage > 0;
+  double get salePrice =>
+      isOnSale ? price * (1 - discountPercentage / 100) : price;
+  String get formattedSalePrice => '\$${salePrice.toStringAsFixed(2)}';
   bool get inStock => stock > 0;
-
-  // Helper method to get the first image URL
   String get firstImage => imageUrls.isNotEmpty ? imageUrls[0] : '';
-
-  // Helper method to format price
   String get formattedPrice => '\$${price.toStringAsFixed(2)}';
 }

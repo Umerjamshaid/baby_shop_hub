@@ -104,12 +104,25 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 const SizedBox(height: 20),
 
                 // Back to main app
-                TextButton(
+                TextButton.icon(
                   onPressed: () {
-                    Navigator.pop(context);
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    if (authProvider.currentUser != null) {
+                      // user logged in → go to HomeScreen
+                      Navigator.pushReplacementNamed(context, '/home');
+                    } else {
+                      // no user → go to LoginScreen
+                      Navigator.pushReplacementNamed(context, '/login');
+                    }
                   },
-                  child: const Text('← Back to Main App'),
+                  icon: const Icon(Icons.arrow_back, color: Colors.blue), // 🔹 arrow icon
+                  label: const Text(
+                    'Back to Main App',
+                    style: TextStyle(color: Colors.blue),
+                  ),
                 ),
+
+
               ],
             ),
           ),

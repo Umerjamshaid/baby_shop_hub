@@ -101,10 +101,13 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 24),
           AppButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home', // Make sure you registered HomeScreen with this route
+                (route) => false, // Clears all previous routes
+              );
             },
-            text: 'Continue Shopping',
-            variant: 'primary',
+            text: 'continue Shopping',
           ),
         ],
       ),

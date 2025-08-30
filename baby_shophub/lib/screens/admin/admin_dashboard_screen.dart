@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/admin_service.dart';
 import 'admin_login_screen.dart';
@@ -177,25 +178,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final stats = [
       {
         'title': 'Total Users',
-        'value': _stats['totalUsers']?.toString() ?? '0',
+        'value': (_stats['totalUsers']?.toString() ?? '0'),
         'icon': Icons.people,
         'color': Colors.blue,
       },
       {
         'title': 'Total Products',
-        'value': _stats['totalProducts']?.toString() ?? '0',
+        'value': (_stats['totalProducts']?.toString() ?? '0'),
         'icon': Icons.shopping_bag,
         'color': Colors.green,
       },
       {
         'title': 'Total Orders',
-        'value': _stats['totalOrders']?.toString() ?? '0',
+        'value': (_stats['totalOrders']?.toString() ?? '0'),
         'icon': Icons.shopping_cart,
         'color': Colors.orange,
       },
       {
         'title': 'Total Sales',
-        'value': '\$${(_stats['totalSales']?.toStringAsFixed(2) ?? '0')}',
+        'value': '\$${(_stats['totalSales']?.toStringAsFixed(2) ?? '0.00')}',
         'icon': Icons.attach_money,
         'color': Colors.purple,
       },
@@ -266,15 +267,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: popularProducts.map<Widget>((item) {
-            final product = item['product'];
-            final count = item['count'];
-            final revenue = item['revenue'];
+            final product = item['product'] as Product?;
+            final count = item['count'] as int? ?? 0;
+            final revenue = item['revenue'] as double? ?? 0.0;
+
+            if (product == null) {
+              return const SizedBox(); // Skip null products
+            }
 
             return ListTile(
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(product.imageUrls.isNotEmpty
-                    ? product.imageUrls[0]
-                    : 'https://via.placeholder.com/50'),
+                backgroundImage: NetworkImage(
+                    product.imageUrls.isNotEmpty
+                        ? product.imageUrls[0]
+                        : 'https://via.placeholder.com/50'
+                ),
               ),
               title: Text(product.name),
               subtitle: Text('Sold: $count • Revenue: \$${revenue.toStringAsFixed(2)}'),

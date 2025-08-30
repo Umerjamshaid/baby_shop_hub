@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -10,7 +9,7 @@ class ReviewService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Add a new review
+  // ----------------- Add a new review -----------------
   Future<void> addReview(Review review) async {
     try {
       await _firestore
@@ -20,14 +19,14 @@ class ReviewService {
           .doc(review.id)
           .set(review.toMap());
 
-      // Update product rating statistics
+      // Update product stats after adding
       await _updateProductRating(review.productId);
     } catch (e) {
       throw Exception('Failed to add review: $e');
     }
   }
 
-  // Get reviews for a product
+  // ----------------- Get all reviews for a product -----------------
   Stream<List<Review>> getProductReviews(String productId) {
     return _firestore
         .collection(AppConstants.productsCollection)
@@ -36,14 +35,11 @@ class ReviewService {
         .where('isApproved', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => Review.fromMap(doc.data()))
-              .toList();
-        });
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Review.fromMap(doc.data())).toList());
   }
 
-  // Get user's reviews
+  // ----------------- Get reviews by a user -----------------
   Stream<List<Review>> getUserReviews(String userId) {
     return _firestore
         .collectionGroup('reviews')
@@ -51,31 +47,30 @@ class ReviewService {
         .where('isApproved', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => Review.fromMap(doc.data()))
-              .toList();
-        });
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Review.fromMap(doc.data())).toList());
   }
 
-  // Check if user has purchased a product
+  // ----------------- Check if user purchased this product -----------------
   Future<bool> hasUserPurchasedProduct(String userId, String productId) async {
     try {
-      // Check if product exists in any of user's completed orders
       final ordersSnapshot = await _firestore
           .collection(AppConstants.ordersCollection)
           .where('userId', isEqualTo: userId)
-          .where('status', isEqualTo: 'Delivered')
+      // Check for any "finished" statuses
+          .where('status', whereIn: ['Delivered', 'Completed'])
           .get();
 
       for (final orderDoc in ordersSnapshot.docs) {
         final orderData = orderDoc.data();
         final items = orderData['items'] as List<dynamic>? ?? [];
 
-        final hasProduct = items.any(
-          (item) =>
-              item is Map<String, dynamic> && item['productId'] == productId,
-        );
+        final hasProduct = items.any((item) {
+          if (item is Map<String, dynamic>) {
+            return item['productId'] == productId;
+          }
+          return false;
+        });
 
         if (hasProduct) return true;
       }
@@ -86,12 +81,9 @@ class ReviewService {
     }
   }
 
-  // Update helpful votes
+  // ----------------- Toggle helpful votes -----------------
   Future<void> toggleHelpfulVote(
-    String productId,
-    String reviewId,
-    String userId,
-  ) async {
+      String productId, String reviewId, String userId) async {
     try {
       final reviewRef = _firestore
           .collection(AppConstants.productsCollection)
@@ -102,15 +94,11 @@ class ReviewService {
       final reviewDoc = await reviewRef.get();
       if (reviewDoc.exists) {
         final reviewData = reviewDoc.data() as Map<String, dynamic>;
-        final helpfulVotes = List<String>.from(
-          reviewData['helpfulVotes'] ?? [],
-        );
+        final helpfulVotes = List<String>.from(reviewData['helpfulVotes'] ?? []);
 
         if (helpfulVotes.contains(userId)) {
-          // Remove vote
           helpfulVotes.remove(userId);
         } else {
-          // Add vote
           helpfulVotes.add(userId);
         }
 
@@ -121,7 +109,7 @@ class ReviewService {
     }
   }
 
-  // Update product rating statistics
+  // ----------------- Update product rating stats -----------------
   Future<void> _updateProductRating(String productId) async {
     try {
       final reviewsSnapshot = await _firestore
@@ -131,44 +119,44 @@ class ReviewService {
           .where('isApproved', isEqualTo: true)
           .get();
 
-      final reviews = reviewsSnapshot.docs
-          .map((doc) => Review.fromMap(doc.data()))
-          .toList();
+      final reviews =
+      reviewsSnapshot.docs.map((doc) => Review.fromMap(doc.data())).toList();
 
       if (reviews.isNotEmpty) {
-        final totalRating = reviews.fold(
-          0.0,
-          (sum, review) => sum + review.rating,
-        );
+        final totalRating = reviews.fold<double>(
+            0.0, (sum, review) => sum + review.rating);
         final averageRating = totalRating / reviews.length;
-        final reviewCount = reviews.length;
 
         await _firestore
             .collection(AppConstants.productsCollection)
             .doc(productId)
-            .update({'rating': averageRating, 'reviewCount': reviewCount});
+            .update({
+          'rating': averageRating,
+          'reviewCount': reviews.length,
+        });
       }
     } catch (e) {
       throw Exception('Failed to update product rating: $e');
     }
   }
 
-  // Upload review images
+  // ----------------- Upload review images -----------------
   Future<List<String>> uploadReviewImages(
-    String reviewId,
-    List<String> filePaths,
-  ) async {
+      String reviewId, List<String> filePaths) async {
     try {
       final List<String> downloadUrls = [];
 
       for (final filePath in filePaths) {
+        final file = File(filePath);
+        if (!file.existsSync()) continue; // skip invalid files
+
         final Reference storageRef = _storage
             .ref()
             .child('review_images')
             .child(reviewId)
             .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
 
-        final UploadTask uploadTask = storageRef.putFile(File(filePath));
+        final UploadTask uploadTask = storageRef.putFile(file);
         final TaskSnapshot snapshot = await uploadTask;
         final String downloadUrl = await snapshot.ref.getDownloadURL();
 
@@ -181,21 +169,20 @@ class ReviewService {
     }
   }
 
-  // Delete review images
+  // ----------------- Delete review images -----------------
   Future<void> deleteReviewImages(List<String> imageUrls) async {
-    try {
-      for (final imageUrl in imageUrls) {
-        if (imageUrl.isNotEmpty) {
-          final Reference storageRef = _storage.refFromURL(imageUrl);
-          await storageRef.delete();
-        }
+    for (final imageUrl in imageUrls) {
+      if (imageUrl.isEmpty) continue;
+      try {
+        final Reference storageRef = _storage.refFromURL(imageUrl);
+        await storageRef.delete();
+      } catch (e) {
+        // Ignore if file already deleted
       }
-    } catch (e) {
-      throw Exception('Failed to delete review images: $e');
     }
   }
 
-  // Check if user has reviewed a product
+  // ----------------- Check if user already reviewed -----------------
   Future<bool> hasUserReviewedProduct(String userId, String productId) async {
     try {
       final reviewSnapshot = await _firestore
@@ -211,7 +198,7 @@ class ReviewService {
     }
   }
 
-  // Get user's review for a specific product
+  // ----------------- Get user review for product -----------------
   Future<Review?> getUserProductReview(String userId, String productId) async {
     try {
       final reviewSnapshot = await _firestore
