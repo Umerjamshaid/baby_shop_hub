@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/product_model.dart';
+import '../providers/favorites_provider.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/product/reviews_list.dart';
 import 'add_review_screen.dart';
@@ -35,6 +37,133 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Favorite and Share Methods
+  Future<bool> _getFavoriteStatus(FavoritesProvider favoritesProvider) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.currentUser == null) return false;
+
+    return await favoritesProvider.isProductInFavorites(
+      authProvider.currentUser!.id,
+      widget.product.id,
+    );
+  }
+
+  Future<void> _toggleFavorite(FavoritesProvider favoritesProvider) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.currentUser == null) {
+      _showLoginDialog(context);
+      return;
+    }
+
+    try {
+      final isCurrentlyFavorite = await _getFavoriteStatus(favoritesProvider);
+
+      if (isCurrentlyFavorite) {
+        await favoritesProvider.removeFromFavorites(
+          authProvider.currentUser!.id,
+          widget.product.id,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Removed from favorites')),
+        );
+      } else {
+        await favoritesProvider.addToFavorites(
+          authProvider.currentUser!.id,
+          widget.product.id,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to favorites')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update favorites: $e')),
+      );
+    }
+  }
+
+  void _shareProduct() {
+    final product = widget.product;
+    final shareText = '''
+🌟 Check out this amazing baby product! 🌟
+
+${product.name}
+${product.description}
+
+Price: ${product.formattedPrice}
+Rating: ⭐ ${product.rating} (${product.reviewCount} reviews)
+
+Perfect for: ${product.ageRange}
+Category: ${product.category}
+
+Get it now on BabyShopHub! 🛍️
+''';
+
+    Share.share(shareText, subject: 'Amazing Baby Product: ${product.name}');
+  }
+
+  void _showLoginDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Login Required'),
+        content: const Text('Please login to add items to your cart.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to login screen
+            },
+            child: const Text('Login'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddToCartSuccess() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Added $_quantity ${widget.product.name} to cart',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -149,17 +278,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
           ),
           const Spacer(),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.favorite_border, size: 22),
-              onPressed: () {},
-            ),
+          // Favorite Button
+          Consumer<FavoritesProvider>(
+            builder: (context, favoritesProvider, _) {
+              return FutureBuilder<bool>(
+                future: _getFavoriteStatus(favoritesProvider),
+                builder: (context, snapshot) {
+                  final isFavorite = snapshot.data ?? false;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        size: 22,
+                        color: isFavorite ? Colors.red : Colors.grey[600],
+                      ),
+                      onPressed: () => _toggleFavorite(favoritesProvider),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           const SizedBox(width: 8),
+          // Share Button
           Container(
             decoration: BoxDecoration(
               color: Colors.grey[100],
@@ -167,7 +312,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
             child: IconButton(
               icon: const Icon(Icons.share_outlined, size: 22),
-              onPressed: () {},
+              onPressed: _shareProduct,
             ),
           ),
         ],
@@ -268,14 +413,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           ),
                           boxShadow: _currentImageIndex == index
                               ? [
-                                  BoxShadow(
-                                    color: Theme.of(
-                                      context,
-                                    ).primaryColor.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
                               : null,
                         ),
                         child: ClipRRect(
@@ -565,13 +710,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -842,11 +980,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildShippingOption(
-    String title,
-    String duration,
-    String price,
-    IconData icon,
-  ) {
+      String title,
+      String duration,
+      String price,
+      IconData icon,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -898,9 +1036,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildFloatingAddToCartButton(
-    CartProvider cartProvider,
-    AuthProvider authProvider,
-  ) {
+      CartProvider cartProvider,
+      AuthProvider authProvider,
+      ) {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -929,70 +1067,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           _showAddToCartSuccess();
         },
         text:
-            'Add to Cart • \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+        'Add to Cart • \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
         width: double.infinity,
-      ),
-    );
-  }
-
-  void _showLoginDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Login Required'),
-        content: const Text('Please login to add items to your cart.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Navigate to login screen
-            },
-            child: const Text('Login'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddToCartSuccess() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Added $_quantity ${widget.product.name} to cart',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
       ),
     );
   }

@@ -55,6 +55,14 @@ dependencies:
   badges: ^3.1.2
   shimmer: ^3.0.0
   image_picker: ^1.2.0
+  firebase_messaging: ^16.0.1
+  flutter_local_notifications: ^19.4.1
+  share_plus: ^11.1.0
+  url_launcher: ^6.3.2
+  timeago: ^3.7.1
+  connectivity_plus: ^6.1.5
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
 
 
 dev_dependencies:

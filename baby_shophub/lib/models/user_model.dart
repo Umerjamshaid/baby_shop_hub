@@ -9,9 +9,9 @@ class UserModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final List<Address> addresses;
-  final List<String> favoriteProducts;
-  final bool isAdmin; // Boolean flag
-  final String role;  // Role string (user, admin, etc.)
+  final List<String> favoriteProducts; // ✅ Added favorites
+  final bool isAdmin;
+  final String role;
 
   UserModel({
     required this.id,
@@ -22,7 +22,7 @@ class UserModel {
     required this.createdAt,
     this.updatedAt,
     this.addresses = const [],
-    this.favoriteProducts = const [],
+    this.favoriteProducts = const [], // ✅ Default empty list
     this.isAdmin = false,
     this.role = 'user',
   });
@@ -37,7 +37,7 @@ class UserModel {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'addresses': addresses.map((address) => address.toMap()).toList(),
-      'favoriteProducts': favoriteProducts,
+      'favoriteProducts': favoriteProducts, // ✅ Saved to Firestore/DB
       'isAdmin': isAdmin,
       'role': role,
     };
@@ -55,7 +55,7 @@ class UserModel {
       addresses: List<Address>.from(
         (map['addresses'] as List? ?? []).map((x) => Address.fromMap(x)),
       ),
-      favoriteProducts: List<String>.from(map['favoriteProducts'] ?? []),
+      favoriteProducts: List<String>.from(map['favoriteProducts'] ?? []), // ✅ Safe parse
       isAdmin: map['isAdmin'] ?? false,
       role: map['role'] ?? 'user',
     );
@@ -99,7 +99,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       addresses: addresses ?? this.addresses,
-      favoriteProducts: favoriteProducts ?? this.favoriteProducts,
+      favoriteProducts: favoriteProducts ?? this.favoriteProducts, // ✅ Preserved
       isAdmin: isAdmin ?? this.isAdmin,
       role: role ?? this.role,
     );

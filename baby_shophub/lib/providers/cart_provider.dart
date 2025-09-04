@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
 import '../services/cart_service.dart';
+import '../services/notification_service.dart';
 
 class CartProvider with ChangeNotifier {
   final CartService _cartService = CartService();
@@ -30,6 +31,10 @@ class CartProvider with ChangeNotifier {
     try {
       _cartItems = await _cartService.getUserCart(userId);
       _isLoading = false;
+
+      // 🔹 Schedule cart abandonment reminder
+      scheduleCartAbandonmentNotification(userId);
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -39,19 +44,18 @@ class CartProvider with ChangeNotifier {
   }
 
   // Add product to cart
-  Future<void> addToCart(String userId, Product product, {int quantity = 1}) async {
+  Future<void> addToCart(String userId, Product product,
+      {int quantity = 1}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Check if product already exists in cart
       final existingItemIndex = _cartItems.indexWhere(
             (item) => item.productId == product.id,
       );
 
       if (existingItemIndex != -1) {
-        // Update quantity if product exists
         final existingItem = _cartItems[existingItemIndex];
         final newQuantity = existingItem.quantity + quantity;
 
@@ -71,7 +75,6 @@ class CartProvider with ChangeNotifier {
           addedAt: existingItem.addedAt,
         );
       } else {
-        // Add new item to cart
         final newCartItem = CartItem(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           productId: product.id,
@@ -87,6 +90,10 @@ class CartProvider with ChangeNotifier {
       }
 
       _isLoading = false;
+
+      // 🔹 Schedule cart abandonment reminder
+      scheduleCartAbandonmentNotification(userId);
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -114,7 +121,8 @@ class CartProvider with ChangeNotifier {
   }
 
   // Update item quantity
-  Future<void> updateQuantity(String userId, String cartItemId, int newQuantity) async {
+  Future<void> updateQuantity(
+      String userId, String cartItemId, int newQuantity) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -190,6 +198,21 @@ class CartProvider with ChangeNotifier {
     return item.quantity;
   }
 
+  // 🔹 Cart abandonment reminder
+  void scheduleCartAbandonmentNotification(String userId) {
+    if (cartItems.isNotEmpty) {
+      Future.delayed(const Duration(hours: 1), () async {
+        if (cartItems.isNotEmpty) {
+          await NotificationService.showLocalNotification(
+            title: 'Items waiting in your cart',
+            body:
+            'You have ${cartItems.length} items waiting in your cart. Complete your purchase now!',
+            payload: 'cart_reminder',
+          );
+        }
+      });
+    }
+  }
 
   // Clear error
   void clearError() {

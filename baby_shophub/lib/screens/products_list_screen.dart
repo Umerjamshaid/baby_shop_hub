@@ -72,6 +72,21 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     }
   }
 
+  void _triggerNewSearch(String suggestion) {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+
+    // Update filters with the new search suggestion
+    setState(() {
+      _filters = SearchFilters(
+        category: 'All',
+        query: suggestion,
+      );
+    });
+
+    // Load products with new filters
+    productProvider.loadProductsWithFilters(_filters);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,7 +177,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
           final products = productProvider.filteredProducts;
 
           if (products.isEmpty) {
-            return _buildNoResults();
+            return _buildNoResultsState(_filters.query);
           }
 
           return _isGridView
@@ -193,8 +208,8 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     );
   }
 
-  /// No results UI (merged with filters handling)
-  Widget _buildNoResults() {
+  /// Enhanced No Results State (merged from both versions)
+  Widget _buildNoResultsState(String query) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -202,27 +217,69 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
           Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No products found',
+            query.isEmpty
+                ? 'No products available'
+                : 'No results found for "$query"',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               color: Colors.grey[600],
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            query.isEmpty
+                ? 'Try browsing different categories'
+                : 'Try searching with different keywords',
+            style: TextStyle(color: Colors.grey[500]),
+          ),
+          const SizedBox(height: 24),
+
+          // Suggested searches
+          const Text(
+            'Try these instead:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          Wrap(
+            spacing: 8,
+            children: ['Diapers', 'Toys', 'Clothing', 'Food']
+                .map((suggestion) {
+              return FilterChip(
+                label: Text(suggestion),
+                onSelected: (_) {
+                  _triggerNewSearch(suggestion);
+                },
+                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                checkmarkColor: Theme.of(context).primaryColor,
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Action buttons
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AdvancedSearchScreen(),
+                  builder: (context) => AdvancedSearchScreen(
+                    initialCategory: _filters.category,
+                  ),
                 ),
               );
             },
-            child: const Text('Adjust Filters'),
+            icon: const Icon(Icons.filter_list),
+            label: const Text('Adjust Filters'),
           ),
           const SizedBox(height: 8),
           TextButton(
-            onPressed: _loadProducts,
+            onPressed: () {
+              setState(() {
+                _filters = SearchFilters(category: 'All', query: '');
+              });
+              _loadProducts();
+            },
             child: const Text('Clear Filters & Show All'),
           ),
         ],
@@ -233,6 +290,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   /// Grid view
   Widget _buildEnhancedGridView(List<Product> products) {
     return GridView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -250,6 +308,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   /// List view
   Widget _buildEnhancedListView(List<Product> products) {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: products.length,
       itemBuilder: (context, index) {
@@ -302,6 +361,13 @@ class EnhancedProductCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: 150,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 150,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.image_not_supported, size: 50),
+                      );
+                    },
                   ),
                 ),
                 if (!product.inStock)
@@ -435,6 +501,12 @@ class EnhancedProductListCard extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
+              child: product.firstImage.isEmpty
+                  ? Container(
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported, size: 50),
+              )
+                  : null,
             ),
             Expanded(
               child: Padding(
@@ -442,24 +514,30 @@ class EnhancedProductListCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      product.name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 8),
                     Text(product.category, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(product.formattedPrice,
-                            style: TextStyle(fontSize: 18, color: Colors.green[700], fontWeight: FontWeight.bold)),
+                        Text(
+                          product.formattedPrice,
+                          style: TextStyle(fontSize: 18, color: Colors.green[700], fontWeight: FontWeight.bold),
+                        ),
                         Row(
                           children: [
                             const Icon(Icons.star, size: 16, color: Colors.amber),
                             const SizedBox(width: 4),
-                            Text(product.rating.toStringAsFixed(1),
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            Text(
+                              product.rating.toStringAsFixed(1),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
                           ],
                         ),
                       ],
@@ -473,8 +551,10 @@ class EnhancedProductListCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: Colors.red[200]!),
                         ),
-                        child: Text('Out of Stock',
-                            style: TextStyle(fontSize: 12, color: Colors.red[700], fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'Out of Stock',
+                          style: TextStyle(fontSize: 12, color: Colors.red[700], fontWeight: FontWeight.w600),
+                        ),
                       ),
                   ],
                 ),

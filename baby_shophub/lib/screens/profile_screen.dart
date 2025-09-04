@@ -1,3 +1,4 @@
+import 'package:baby_shophub/screens/notification_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,6 +10,7 @@ import 'auth/login_screen.dart';
 import 'auth/register_screen.dart';
 import 'address_management_screen.dart';
 import 'edit_profile_screen.dart';
+import 'favorites_screen.dart'; // Add this import
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -80,10 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.grey[50]!,
-            Colors.grey[100]!,
-          ],
+          colors: [Colors.grey[50]!, Colors.grey[100]!],
         ),
       ),
       child: Column(
@@ -216,10 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.grey[200]!,
-                    width: 3,
-                  ),
+                  border: Border.all(color: Colors.grey[200]!, width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -233,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundImage: user.profileImage != null
                       ? NetworkImage(user.profileImage!)
                       : const AssetImage('assets/images/placeholder.png')
-                  as ImageProvider,
+                            as ImageProvider,
                   child: user.profileImage == null
                       ? const Icon(Icons.person, size: 50, color: Colors.white)
                       : null,
@@ -260,10 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           Text(
             user.name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           if (user.phone != null) ...[
             const SizedBox(height: 8),
@@ -302,10 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Text(
               'Account Information',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildInfoRow('Member since', _formatDate(user.createdAt)),
@@ -345,10 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const Text(
                   'Addresses',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -408,7 +395,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDefault ? const Color(0xFF6B73FF).withOpacity(0.05) : Colors.white,
+        color: isDefault
+            ? const Color(0xFF6B73FF).withOpacity(0.05)
+            : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDefault ? const Color(0xFF6B73FF) : Colors.grey[200]!,
@@ -439,23 +428,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (isDefault) const SizedBox(height: 8),
             Text(
               address.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            Text(
-              address.phone,
-              style: const TextStyle(fontSize: 14),
-            ),
+            Text(address.phone, style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 8),
             Text(
               address.fullAddress,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
         ),
@@ -466,6 +446,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildActionButtons(AuthProvider authProvider) {
     return Column(
       children: [
+        // Add to cart functionality
+        _buildListTile(
+          icon: Icons.favorite,
+          title: 'My Favorites',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FavoritesScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildListTile(
+          icon: Icons.notifications,
+          title: 'Notification Settings',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
         AppButton(
           onPressed: () {
             Navigator.push(
@@ -488,6 +491,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: double.infinity,
         ),
       ],
+    );
+  }
+
+  // Helper method to build list tile for favorites
+  Widget _buildListTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF6B73FF), size: 24),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
     );
   }
 

@@ -7,6 +7,7 @@ import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/common/app_button.dart';
 import 'checkout_screen.dart';
+import '../widgets/common/empty_state_widget.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -48,10 +49,18 @@ class _CartScreenState extends State<CartScreen> {
     if (cartProvider.isLoading) {
       return _buildLoadingState();
     }
-
     if (cartProvider.cartItems.isEmpty) {
-      return _buildEmptyState();
+      return EmptyCartWidget(
+        onShopNow: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home', // make sure HomeScreen is registered with this route
+                (route) => false,
+          );
+        },
+      );
     }
+
 
     return Column(
       children: [
@@ -74,45 +83,7 @@ class _CartScreenState extends State<CartScreen> {
     return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.shopping_cart_outlined,
-            size: 80,
-            color: Colors.grey,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Your cart is empty',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add some items to get started',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
-          AppButton(
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/home', // Make sure you registered HomeScreen with this route
-                (route) => false, // Clears all previous routes
-              );
-            },
-            text: 'continue Shopping',
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildCartItem(
     CartItem item,

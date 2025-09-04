@@ -3,6 +3,8 @@ import 'package:baby_shophub/screens/auth/login_screen.dart';
 import 'package:baby_shophub/screens/auth/register_screen.dart';
 import 'package:baby_shophub/screens/home_screen.dart';
 import 'package:baby_shophub/screens/order_confirmation_screen.dart';
+import 'package:baby_shophub/screens/favorites_screen.dart'; // ✅ Add favorites screen
+import 'package:baby_shophub/utils/connectivity_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
+import 'providers/favorites_provider.dart'; // ✅ Add favorites provider
+import 'services/notification_service.dart'; // ✅ Add notification service
 import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/analytics_screen.dart';
@@ -21,6 +25,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await LocalStorage().init(); // Initialize local storage
+
+  // ✅ Initialize notifications
+  await NotificationService.initialize();
+
   runApp(const MyApp());
 }
 
@@ -34,6 +42,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        Provider(create: (_) => ConnectivityService()),
+        // ✅ Added
       ],
       child: MaterialApp(
         title: 'BabyShopHub',
@@ -46,6 +57,7 @@ class MyApp extends StatelessWidget {
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const HomeScreen(),
           '/order-confirmation': (context) => const OrderConfirmationScreen(),
+          '/favorites': (context) => const FavoritesScreen(),
           '/admin-login': (context) => AdminLoginScreen(),
           '/admin-dashboard': (context) => AdminDashboardScreen(),
           '/analytics': (context) => AnalyticsScreen(),

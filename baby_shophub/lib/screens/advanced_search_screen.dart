@@ -32,14 +32,15 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _filters = SearchFilters(
-      category: widget.initialCategory ?? 'All',
-    );
+    _filters = SearchFilters(category: widget.initialCategory ?? 'All');
     _loadFilterOptions();
   }
 
   Future<void> _loadFilterOptions() async {
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
 
     try {
       _brands = await productProvider.getBrands();
@@ -68,10 +69,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
           if (_filters.hasFilters)
             TextButton(
               onPressed: _clearFilters,
-              child: const Text(
-                'Clear',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Clear', style: TextStyle(color: Colors.white)),
             ),
         ],
       ),
@@ -273,10 +271,9 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: _filters.category,
-          items: [
-            'All',
-            ...AppConstants.productCategories,
-          ].map((String category) {
+          items: ['All', ...AppConstants.productCategories].map((
+            String category,
+          ) {
             return DropdownMenuItem<String>(
               value: category,
               child: Text(category),
@@ -494,12 +491,21 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
           value: _filters.sortBy,
           items: const [
             DropdownMenuItem(value: 'relevance', child: Text('Relevance')),
-            DropdownMenuItem(value: 'price_low', child: Text('Price: Low to High')),
-            DropdownMenuItem(value: 'price_high', child: Text('Price: High to Low')),
+            DropdownMenuItem(
+              value: 'price_low',
+              child: Text('Price: Low to High'),
+            ),
+            DropdownMenuItem(
+              value: 'price_high',
+              child: Text('Price: High to Low'),
+            ),
             DropdownMenuItem(value: 'rating', child: Text('Highest Rated')),
             DropdownMenuItem(value: 'newest', child: Text('Newest First')),
             DropdownMenuItem(value: 'name', child: Text('Name (A-Z)')),
-            DropdownMenuItem(value: 'discount', child: Text('Biggest Discount')),
+            DropdownMenuItem(
+              value: 'discount',
+              child: Text('Biggest Discount'),
+            ),
           ],
           onChanged: (value) {
             setState(() {
@@ -525,9 +531,45 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProductsListScreen(
-          searchFilters: _filters,
-        ),
+        builder: (context) => ProductsListScreen(searchFilters: _filters),
+      ),
+    );
+  }
+
+  // In your search delegate, update the no results state:
+  Widget _buildNoResultsState(String query) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(
+            'No results found for "$query"',
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try searching with different keywords',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+
+          // Suggested searches
+          const Text('Try these instead:'),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            children: ['Diapers', 'Toys', 'Clothing', 'Food'].map((suggestion) {
+              return FilterChip(
+                label: Text(suggestion),
+                onSelected: (_) {
+                  // Update search with suggestion
+                },
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
