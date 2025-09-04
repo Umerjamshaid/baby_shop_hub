@@ -7,6 +7,103 @@ import '../utils/constants.dart';
 class ProductService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // ✅ Add product
+  Future<void> addProduct(Product product) async {
+    try {
+      await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(product.id)
+          .set(product.toMap());
+
+      // Update the product count in the category
+      await _updateCategoryProductCount(product.category);
+    } catch (e) {
+      throw Exception('Failed to add product: $e');
+    }
+  }
+
+  // ✅ Update product
+  Future<void> updateProduct(Product product) async {
+    try {
+      // Get the old product to check if category changed
+      final oldProductDoc = await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(product.id)
+          .get();
+
+      if (oldProductDoc.exists) {
+        final oldProduct = Product.fromMap(
+            oldProductDoc.data() as Map<String, dynamic>);
+
+        // If category changed, update both old and new category counts
+        if (oldProduct.category != product.category) {
+          await _updateCategoryProductCount(oldProduct.category);
+          await _updateCategoryProductCount(product.category);
+        }
+      }
+
+      await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(product.id)
+          .update(product.toMap());
+    } catch (e) {
+      throw Exception('Failed to update product: $e');
+    }
+  }
+
+  // ✅ Delete product
+  Future<void> deleteProduct(String productId) async {
+    try {
+      // Get the product to know which category to update
+      final productDoc = await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(productId)
+          .get();
+
+      if (productDoc.exists) {
+        final product =
+        Product.fromMap(productDoc.data() as Map<String, dynamic>);
+
+        // Delete the product
+        await _firestore
+            .collection(AppConstants.productsCollection)
+            .doc(productId)
+            .delete();
+
+        // Update the product count in the category
+        await _updateCategoryProductCount(product.category);
+      }
+    } catch (e) {
+      throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  // ✅ Helper: Update product count in a category
+  Future<void> _updateCategoryProductCount(String categoryName) async {
+    try {
+      // Get all products in this category
+      final productsSnapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .where('category', isEqualTo: categoryName)
+          .get();
+
+      final productCount = productsSnapshot.docs.length;
+
+      // Find the category document by name
+      final categoryQuery = await _firestore
+          .collection(AppConstants.categoriesCollection)
+          .where('name', isEqualTo: categoryName)
+          .get();
+
+      if (categoryQuery.docs.isNotEmpty) {
+        final categoryDoc = categoryQuery.docs.first;
+        await categoryDoc.reference.update({'productCount': productCount});
+      }
+    } catch (e) {
+      print('Error updating category product count: $e');
+    }
+  }
+
   // ✅ Get all products with optional filters
   Future<List<Product>> getProducts({SearchFilters? filters}) async {
     try {
@@ -18,11 +115,14 @@ class ProductService {
           query = query.where('category', isEqualTo: filters.category);
         }
         if (filters.minPrice > 0 || filters.maxPrice < 1000) {
-          query = query.where('price', isGreaterThanOrEqualTo: filters.minPrice);
-          query = query.where('price', isLessThanOrEqualTo: filters.maxPrice);
+          query = query.where('price',
+              isGreaterThanOrEqualTo: filters.minPrice);
+          query =
+              query.where('price', isLessThanOrEqualTo: filters.maxPrice);
         }
         if (filters.minRating > 0) {
-          query = query.where('rating', isGreaterThanOrEqualTo: filters.minRating);
+          query = query.where('rating',
+              isGreaterThanOrEqualTo: filters.minRating);
         }
         if (filters.brands.isNotEmpty) {
           query = query.where('brand', whereIn: filters.brands);
@@ -124,13 +224,15 @@ class ProductService {
     }
   }
 
-  // ✅ Backwards compatibility: Simple searchProducts
+  // ✅ Simple search
   Future<List<Product>> searchProducts(String query) async {
     try {
       final allProducts = await getAllProducts();
       return allProducts.where((product) {
         return product.name.toLowerCase().contains(query.toLowerCase()) ||
-            product.description.toLowerCase().contains(query.toLowerCase()) ||
+            product.description
+                .toLowerCase()
+                .contains(query.toLowerCase()) ||
             product.category.toLowerCase().contains(query.toLowerCase()) ||
             product.brand.toLowerCase().contains(query.toLowerCase());
       }).toList();
@@ -139,7 +241,7 @@ class ProductService {
     }
   }
 
-  // ✅ Apply client-side filters
+  // ✅ Client-side filters
   List<Product> _applyClientSideFilters(
       List<Product> products, SearchFilters filters) {
     var filteredProducts = products;
@@ -174,7 +276,7 @@ class ProductService {
     return _sortProducts(filteredProducts, filters.sortBy);
   }
 
-  // ✅ Sorting helper
+  // ✅ Sorting
   List<Product> _sortProducts(List<Product> products, String sortBy) {
     switch (sortBy) {
       case 'price_low':
@@ -193,7 +295,8 @@ class ProductService {
         products.sort((a, b) => a.name.compareTo(b.name));
         break;
       case 'discount':
-        products.sort((a, b) => b.discountPercentage.compareTo(a.discountPercentage));
+        products.sort(
+                (a, b) => b.discountPercentage.compareTo(a.discountPercentage));
         break;
       default:
         break;
@@ -291,7 +394,7 @@ class ProductService {
       QuerySnapshot snapshot = await _firestore
           .collection(AppConstants.productsCollection)
           .where('name', isGreaterThanOrEqualTo: query)
-          .where('name', isLessThanOrEqualTo: query + '\uf8ff')
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
           .limit(5)
           .get();
 

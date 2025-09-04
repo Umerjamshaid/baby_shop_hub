@@ -48,7 +48,15 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
 
   void _loadProducts() {
     final productProvider = Provider.of<ProductProvider>(context, listen: false);
-    productProvider.loadProductsWithFilters(_filters);
+
+    if (widget.category != null) {
+      // Filter by category from database
+      productProvider.filterProductsByCategory(widget.category!);
+    } else if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
+      productProvider.searchProducts(widget.searchQuery!);
+    } else {
+      productProvider.clearFilters();
+    }
   }
 
   void _sortProducts(String sortBy) {

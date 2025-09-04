@@ -2,7 +2,7 @@ class Category {
   final String id;
   final String name;
   final String imageUrl;
-  final int productCount;
+  late final int productCount;
 
   Category({
     required this.id,
@@ -26,6 +26,20 @@ class Category {
       name: map['name'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       productCount: map['productCount']?.toInt() ?? 0,
+    );
+  }
+  // Add copyWith method
+  Category copyWith({
+    String? id,
+    String? name,
+    String? imageUrl,
+    int? productCount,
+  }) {
+    return Category(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
+      productCount: productCount ?? this.productCount,
     );
   }
 }

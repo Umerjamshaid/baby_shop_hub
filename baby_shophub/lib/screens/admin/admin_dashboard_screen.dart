@@ -8,6 +8,8 @@ import 'admin_login_screen.dart';
 import 'admin_products_screen.dart';
 import 'admin_orders_screen.dart';
 import 'admin_users_screen.dart';
+import 'categories_screen.dart'; // ✅ Import Categories
+import 'product_form_screen.dart'; // ✅ Import Add Product
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -108,6 +110,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const AdminProductsScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Categories'), // ✅ Categories
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoriesScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.add_box),
+            title: const Text('Add Product'), // ✅ Add Product
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProductFormScreen(),
                 ),
               );
             },
@@ -278,13 +304,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             return ListTile(
               leading: CircleAvatar(
                 backgroundImage: NetworkImage(
-                    product.imageUrls.isNotEmpty
-                        ? product.imageUrls[0]
-                        : 'https://via.placeholder.com/50'
+                  product.imageUrls.isNotEmpty
+                      ? product.imageUrls[0]
+                      : 'https://via.placeholder.com/50',
                 ),
               ),
               title: Text(product.name),
-              subtitle: Text('Sold: $count • Revenue: \$${revenue.toStringAsFixed(2)}'),
+              subtitle: Text(
+                'Sold: $count • Revenue: \$${revenue.toStringAsFixed(2)}',
+              ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             );
           }).toList(),
