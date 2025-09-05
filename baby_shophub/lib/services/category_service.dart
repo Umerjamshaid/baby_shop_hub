@@ -75,7 +75,7 @@ class CategoryService {
     }
   }
 
-  // ✅ Get categories with product count
+  // ✅ Get categories with product count (using copyWith)
   Future<List<Category>> getCategoriesWithProductCount() async {
     try {
       // Get all categories
@@ -89,15 +89,16 @@ class CategoryService {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
 
-      // Update each category with product count
-      for (var category in categories) {
+      // Return updated categories using copyWith
+      final updatedCategories = categories.map((category) {
         final count = products
             .where((product) => product['category'] == category.name)
             .length;
-        category.productCount = count;
-      }
 
-      return categories;
+        return category.copyWith(productCount: count);
+      }).toList();
+
+      return updatedCategories;
     } catch (e) {
       throw Exception('Failed to fetch categories with product count: $e');
     }

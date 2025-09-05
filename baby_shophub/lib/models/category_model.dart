@@ -2,13 +2,13 @@ class Category {
   final String id;
   final String name;
   final String imageUrl;
-  late final int productCount;
+  final int productCount;
 
   Category({
     required this.id,
     required this.name,
     required this.imageUrl,
-    this.productCount = 0,
+    this.productCount = 0, // Provide a default value
   });
 
   Map<String, dynamic> toMap() {

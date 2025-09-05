@@ -32,8 +32,8 @@ class ProductService {
           .get();
 
       if (oldProductDoc.exists) {
-        final oldProduct = Product.fromMap(
-            oldProductDoc.data() as Map<String, dynamic>);
+        final oldProduct =
+        Product.fromMap(oldProductDoc.data() as Map<String, dynamic>);
 
         // If category changed, update both old and new category counts
         if (oldProduct.category != product.category) {
@@ -96,8 +96,21 @@ class ProductService {
           .get();
 
       if (categoryQuery.docs.isNotEmpty) {
+        // ✅ Update existing category
         final categoryDoc = categoryQuery.docs.first;
         await categoryDoc.reference.update({'productCount': productCount});
+      } else {
+        // ✅ Create category if it doesn’t exist
+        final newCategoryRef =
+        _firestore.collection(AppConstants.categoriesCollection).doc();
+
+        await newCategoryRef.set({
+          'id': newCategoryRef.id,
+          'name': categoryName,
+          'imageUrl': '', // can be updated later
+          'productCount': productCount,
+          'createdAt': DateTime.now(),
+        });
       }
     } catch (e) {
       print('Error updating category product count: $e');
