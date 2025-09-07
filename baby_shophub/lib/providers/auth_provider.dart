@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart'; // ✅ Added
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -48,12 +49,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> signUp(
-    String email,
-    String password,
-    String name,
-    String? phone, {
-    String role = 'user',
-  }) async {
+      String email,
+      String password,
+      String name,
+      String? phone, {
+        String role = 'user',
+      }) async {
     _setLoading(true);
     _setError(null);
 
@@ -99,9 +100,17 @@ class AuthProvider with ChangeNotifier {
       final user = await _authService.signInWithEmail(email, password);
       if (user != null) {
         _currentUser = user;
+
         if (user.isAdministrator) {
-          debugPrint('Admin user logged in');
+          // ✅ Subscribe admin to admin_orders
+          await NotificationService.subscribeAdminToOrders();
+          debugPrint('Admin user logged in and subscribed to admin_orders');
+        } else {
+          // ✅ Normal user subscribes to their own order updates
+          await NotificationService.subscribeToOrderUpdates(user.id);
+          debugPrint('User subscribed to order updates for: ${user.id}');
         }
+
         return true;
       }
 
@@ -121,6 +130,16 @@ class AuthProvider with ChangeNotifier {
   Future<void> signOut() async {
     _setLoading(true);
     try {
+      if (_currentUser != null) {
+        if (_currentUser!.isAdministrator) {
+          // ✅ Unsubscribe admin
+          await NotificationService.unsubscribeAdminFromOrders();
+        } else {
+          // ✅ Unsubscribe regular user
+          await NotificationService.unsubscribeFromOrderUpdates(_currentUser!.id);
+        }
+      }
+
       await _authService.signOut();
       _currentUser = null;
     } catch (e) {

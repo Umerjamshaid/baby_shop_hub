@@ -14,6 +14,10 @@ class NotificationService {
       sound: true,
     );
 
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    }
+
     // Get token
     String? token = await _firebaseMessaging.getToken();
     print("FCM Token: $token");
@@ -22,7 +26,6 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // For iOS - use the updated syntax
     final DarwinInitializationSettings initializationSettingsIOS =
     DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -44,12 +47,15 @@ class NotificationService {
       },
     );
 
+    // Background handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     // Handle messages when app is in foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showNotification(message);
     });
 
-    // Handle messages when app is in background
+    // Handle messages when app is in background (opened via tap)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       _handleMessage(message);
     });
@@ -61,12 +67,19 @@ class NotificationService {
     }
   }
 
+  /// 🔹 Background handler
+  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    print("Handling a background message: ${message.messageId}");
+    _showNotification(message);
+  }
+
+  /// 🔹 Show notification
   static Future<void> _showNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
     AndroidNotificationDetails(
-      'high_importance_channel',
-      'High Importance Notifications',
-      channelDescription: 'This channel is used for important notifications.',
+      'order_updates',
+      'Order Updates',
+      channelDescription: 'Notifications for order status updates',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
@@ -81,7 +94,7 @@ class NotificationService {
     );
 
     await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecond,
+      message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
       message.notification?.title ?? 'BabyShopHub',
       message.notification?.body ?? 'New notification',
       platformChannelSpecifics,
@@ -89,43 +102,41 @@ class NotificationService {
     );
   }
 
+  /// 🔹 Handle message opened app
   static void _handleMessage(RemoteMessage message) {
-    // Handle different types of messages
+    print("Message opened app: ${message.messageId}");
     final String type = message.data['type'] ?? 'general';
     _handleNotificationType(type, message.data);
   }
 
+  /// 🔹 Handle notification tap
   static void _handleNotificationTap(NotificationResponse response) {
-    // Handle notification tap based on payload
     final String type = response.payload ?? 'general';
     _handleNotificationType(type, {});
   }
 
+  /// 🔹 Handle notification type logic
   static void _handleNotificationType(String type, Map<String, dynamic> data) {
     switch (type) {
       case 'order_update':
-      // Navigate to order details
         print('Order update notification tapped');
         break;
       case 'new_arrival':
-      // Navigate to new arrivals
         print('New arrival notification tapped');
         break;
       case 'offer':
-      // Navigate to offers
         print('Offer notification tapped');
         break;
       case 'cart_reminder':
-      // Navigate to cart
         print('Cart reminder notification tapped');
         break;
       default:
-      // Handle default case
         print('General notification tapped');
         break;
     }
   }
 
+  /// 🔹 Subscribe/unsubscribe to generic topics
   static Future<void> subscribeToTopic(String topic) async {
     await _firebaseMessaging.subscribeToTopic(topic);
   }
@@ -134,7 +145,29 @@ class NotificationService {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
   }
 
-  // Method to show local notifications (for cart abandonment, etc.)
+  /// 🔹 User-specific order updates
+  static Future<void> subscribeToOrderUpdates(String userId) async {
+    await _firebaseMessaging.subscribeToTopic('order_$userId');
+    print('Subscribed to order updates for user: $userId');
+  }
+
+  static Future<void> unsubscribeFromOrderUpdates(String userId) async {
+    await _firebaseMessaging.unsubscribeFromTopic('order_$userId');
+    print('Unsubscribed from order updates for user: $userId');
+  }
+
+  /// 🔹 Admin-only order notifications
+  static Future<void> subscribeAdminToOrders() async {
+    await _firebaseMessaging.subscribeToTopic('admin_orders');
+    print('✅ Subscribed to admin_orders topic');
+  }
+
+  static Future<void> unsubscribeAdminFromOrders() async {
+    await _firebaseMessaging.unsubscribeFromTopic('admin_orders');
+    print('🚫 Unsubscribed from admin_orders topic');
+  }
+
+  /// 🔹 Local-only notifications (cart abandonment, etc.)
   static Future<void> showLocalNotification({
     required String title,
     required String body,
