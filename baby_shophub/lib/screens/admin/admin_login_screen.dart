@@ -105,7 +105,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                 // Back to main app
                 TextButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
                     if (authProvider.currentUser != null) {
                       // user logged in → go to HomeScreen
@@ -139,7 +139,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        final success = await authProvider.signIn(
+        final success = await Provider.of<AuthProvider>(context, listen: false).signIn(
+          context, // ✅ First argument
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );

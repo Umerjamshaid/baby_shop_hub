@@ -48,15 +48,26 @@ class _ProductsListScreenState extends State<ProductsListScreen>
 
     _filters =
         widget.searchFilters ??
-        SearchFilters(
-          category: widget.category ?? 'All',
-          query: widget.searchQuery ?? '',
-        );
+            SearchFilters(
+              category: widget.category ?? 'All',
+              query: widget.searchQuery ?? '',
+            );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProducts();
       _animationController.forward();
     });
+  }
+
+  @override
+  void didUpdateWidget(ProductsListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Reload products if category or search query changes
+    if (oldWidget.category != widget.category ||
+        oldWidget.searchQuery != widget.searchQuery) {
+      _loadProducts();
+    }
   }
 
   @override
@@ -72,11 +83,13 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       listen: false,
     );
 
+    // If we're coming from a category or search, apply the filter
     if (widget.category != null) {
       productProvider.filterProductsByCategory(widget.category!);
     } else if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
       productProvider.searchProducts(widget.searchQuery!);
     } else {
+      // If no category or search query, show all products
       productProvider.clearFilters();
     }
   }
@@ -101,7 +114,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     } else if (_filters.hasFilters) {
       return 'Filtered Products';
     } else {
-      return 'All Products';
+      return widget.category ?? widget.searchQuery ?? 'All Products';
     }
   }
 
@@ -243,7 +256,9 @@ class _ProductsListScreenState extends State<ProductsListScreen>
             final products = productProvider.filteredProducts;
 
             if (products.isEmpty) {
-              return _buildNoResultsState(_filters.query);
+              return _buildNoResultsState(
+                  widget.searchQuery ?? _filters.query
+              );
             }
 
             return _isGridView
@@ -321,10 +336,10 @@ class _ProductsListScreenState extends State<ProductsListScreen>
   }
 
   PopupMenuItem<String> _buildSortOption(
-    String value,
-    IconData icon,
-    String text,
-  ) {
+      String value,
+      IconData icon,
+      String text,
+      ) {
     final isSelected = _currentSort == value;
     return PopupMenuItem(
       value: value,
@@ -435,8 +450,8 @@ class _ProductsListScreenState extends State<ProductsListScreen>
                     spacing: 12,
                     runSpacing: 12,
                     children: ['Diapers', 'Toys', 'Clothing', 'Food'].map((
-                      suggestion,
-                    ) {
+                        suggestion,
+                        ) {
                       return Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -516,18 +531,13 @@ class _ProductsListScreenState extends State<ProductsListScreen>
             ),
             const SizedBox(height: 12),
             TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _filters = SearchFilters(category: 'All', query: '');
-                });
-                _loadProducts();
-              },
+              onPressed: _loadProducts,
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              icon: Icon(Icons.clear_all_rounded, color: Colors.grey.shade600),
+              icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade600),
               label: Text(
-                'Clear Filters & Show All',
+                'Try Again',
                 style: TextStyle(
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w600,
@@ -550,8 +560,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio:
-              0.65, // Changed from 0.75 to 0.65 - makes cards taller
+          childAspectRatio: 0.65,
         ),
         itemCount: products.length,
         itemBuilder: (context, index) {
@@ -575,7 +584,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
         return AnimatedContainer(
           duration: Duration(milliseconds: 300 + (index * 50)),
           curve: Curves.easeOutBack,
-          child: EnhancedProductListCard(product: products[index]),
+          child: ProductListCard(product: products[index]),
         );
       },
     );
@@ -620,9 +629,8 @@ class EnhancedProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image section - adjusted flex for better proportions
               Expanded(
-                flex: 5, // Changed from 3 to 5
+                flex: 5,
                 child: Stack(
                   children: [
                     ClipRRect(
@@ -721,31 +729,28 @@ class EnhancedProductCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Text section - increased flex and better layout
               Expanded(
-                flex: 4, // Changed from 2 to 4 - more space for text
+                flex: 4,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Product name with better constraints
                       Expanded(
-                        flex: 3, // Most space for the product name
+                        flex: 3,
                         child: Text(
                           product.name,
                           style: const TextStyle(
-                            fontSize: 14, // Increased from 13
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            height: 1.3, // Better line height
+                            height: 1.3,
                             color: Colors.black87,
                           ),
-                          maxLines: 3, // Increased from 2
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // Category
                       Text(
                         product.category,
                         style: TextStyle(
@@ -757,7 +762,6 @@ class EnhancedProductCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      // Price and stock info
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -814,10 +818,11 @@ class EnhancedProductCard extends StatelessWidget {
   }
 }
 
-class EnhancedProductListCard extends StatelessWidget {
+// List view variant of product card - enhanced version
+class ProductListCard extends StatelessWidget {
   final Product product;
 
-  const EnhancedProductListCard({super.key, required this.product});
+  const ProductListCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -874,21 +879,21 @@ class EnhancedProductListCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     child: product.firstImage.isNotEmpty
                         ? Image.network(
-                            product.firstImage,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.image_not_supported_rounded,
-                                size: 40,
-                                color: Colors.grey.shade400,
-                              );
-                            },
-                          )
+                      product.firstImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.image_not_supported_rounded,
+                          size: 40,
+                          color: Colors.grey.shade400,
+                        );
+                      },
+                    )
                         : Icon(
-                            Icons.image_not_supported_rounded,
-                            size: 40,
-                            color: Colors.grey.shade400,
-                          ),
+                      Icons.image_not_supported_rounded,
+                      size: 40,
+                      color: Colors.grey.shade400,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),

@@ -12,7 +12,11 @@ class ProductProvider with ChangeNotifier {
   List<Product> _filteredProducts = [];
   bool _isLoading = false;
   String? _error;
+
+  // ✅ Track active filters/search
   SearchFilters _currentFilters = SearchFilters();
+  String? _currentCategory;
+  String? _currentSearchQuery;
 
   List<Product> get allProducts => _allProducts;
   List<Product> get featuredProducts => _featuredProducts;
@@ -20,8 +24,10 @@ class ProductProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   SearchFilters get currentFilters => _currentFilters;
+  String? get currentCategory => _currentCategory;
+  String? get currentSearchQuery => _currentSearchQuery;
 
-  // Load all products with optional filters
+  // 🔹 Load products with filters
   Future<void> loadProductsWithFilters(SearchFilters filters) async {
     _isLoading = true;
     _error = null;
@@ -40,12 +46,14 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  // Load all products
+  // 🔹 Load all products
   Future<void> loadAllProducts() async {
+    _currentCategory = null;
+    _currentSearchQuery = null;
     await loadProductsWithFilters(SearchFilters());
   }
 
-  // Load featured products
+  // 🔹 Load featured products
   Future<void> loadFeaturedProducts() async {
     _isLoading = true;
     _error = null;
@@ -62,21 +70,25 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  // Search products
+  // 🔹 Search products
   Future<void> searchProducts(String query) async {
-    await loadProductsWithFilters(
-      SearchFilters(query: query),
-    );
+    _currentSearchQuery = query;
+    _currentCategory = null;
+    await loadProductsWithFilters(SearchFilters(query: query));
   }
 
-  // Filter products by category
+  // 🔹 Filter products by category
   Future<void> filterProductsByCategory(String category) async {
-    await loadProductsWithFilters(
-      SearchFilters(category: category),
-    );
+    if (category == 'All') {
+      await loadAllProducts();
+    } else {
+      _currentCategory = category;
+      _currentSearchQuery = null;
+      await loadProductsWithFilters(SearchFilters(category: category));
+    }
   }
 
-  // ✅ Sort products
+  // 🔹 Sort products
   void sortProducts(String sortBy) {
     List<Product> sortedProducts = List.from(_filteredProducts);
 
@@ -99,78 +111,32 @@ class ProductProvider with ChangeNotifier {
       case 'discount':
         sortedProducts.sort((a, b) => b.discountPercentage.compareTo(a.discountPercentage));
         break;
-      default: // relevance
-      // No sorting or default sorting
-        break;
     }
 
     _filteredProducts = sortedProducts;
     notifyListeners();
   }
 
-  // Get brands
-  Future<List<String>> getBrands() async {
-    try {
-      return await _productService.getBrands();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Get age ranges
-  Future<List<String>> getAgeRanges() async {
-    try {
-      return await _productService.getAgeRanges();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Get sizes
-  Future<List<String>> getSizes() async {
-    try {
-      return await _productService.getSizes();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Get colors
-  Future<List<String>> getColors() async {
-    try {
-      return await _productService.getColors();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Get search suggestions
-  Future<List<String>> getSearchSuggestions(String query) async {
-    try {
-      return await _productService.getSearchSuggestions(query);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Get popular searches
-  Future<List<String>> getPopularSearches() async {
-    try {
-      return await _productService.getPopularSearches();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Clear filters
+  // 🔹 Clear filters/search
   void clearFilters() {
     _filteredProducts = _allProducts;
+    _currentCategory = null;
+    _currentSearchQuery = null;
+    _currentFilters = SearchFilters();
     notifyListeners();
   }
 
-  // Clear error
+  // 🔹 Clear error
   void clearError() {
     _error = null;
     notifyListeners();
   }
+
+  // 🔹 Extra helpers from ProductService
+  Future<List<String>> getBrands() => _productService.getBrands();
+  Future<List<String>> getAgeRanges() => _productService.getAgeRanges();
+  Future<List<String>> getSizes() => _productService.getSizes();
+  Future<List<String>> getColors() => _productService.getColors();
+  Future<List<String>> getSearchSuggestions(String query) => _productService.getSearchSuggestions(query);
+  Future<List<String>> getPopularSearches() => _productService.getPopularSearches();
 }

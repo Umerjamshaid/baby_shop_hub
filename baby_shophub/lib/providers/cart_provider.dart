@@ -7,6 +7,7 @@ import '../services/notification_service.dart';
 
 class CartProvider with ChangeNotifier {
   final CartService _cartService = CartService();
+  final NotificationService _notificationService = NotificationService();
 
   List<CartItem> _cartItems = [];
   bool _isLoading = false;
@@ -51,9 +52,8 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final existingItemIndex = _cartItems.indexWhere(
-            (item) => item.productId == product.id,
-      );
+      final existingItemIndex =
+      _cartItems.indexWhere((item) => item.productId == product.id);
 
       if (existingItemIndex != -1) {
         final existingItem = _cartItems[existingItemIndex];
@@ -94,6 +94,12 @@ class CartProvider with ChangeNotifier {
       // 🔹 Schedule cart abandonment reminder
       scheduleCartAbandonmentNotification(userId);
 
+      // 🔹 Local notification
+      await _notificationService.showLocalNotification(
+        title: 'Item Added to Cart',
+        body: '${product.name} has been added to your cart',
+      );
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -109,8 +115,17 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final item = _cartItems.firstWhere((item) => item.id == cartItemId);
+
       await _cartService.removeFromCart(userId, cartItemId);
       _cartItems.removeWhere((item) => item.id == cartItemId);
+
+      // 🔹 Local notification
+      await _notificationService.showLocalNotification(
+        title: 'Item Removed from Cart',
+        body: '${item.productName} has been removed from your cart',
+      );
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -147,6 +162,13 @@ class CartProvider with ChangeNotifier {
           addedAt: _cartItems[itemIndex].addedAt,
         );
         _cartItems[itemIndex] = updatedItem;
+
+        // 🔹 Local notification
+        await _notificationService.showLocalNotification(
+          title: 'Cart Updated',
+          body:
+          'Quantity of ${_cartItems[itemIndex].productName} updated to $newQuantity',
+        );
       }
 
       _isLoading = false;
@@ -203,7 +225,7 @@ class CartProvider with ChangeNotifier {
     if (cartItems.isNotEmpty) {
       Future.delayed(const Duration(hours: 1), () async {
         if (cartItems.isNotEmpty) {
-          await NotificationService.showLocalNotification(
+          await _notificationService.showLocalNotification(
             title: 'Items waiting in your cart',
             body:
             'You have ${cartItems.length} items waiting in your cart. Complete your purchase now!',

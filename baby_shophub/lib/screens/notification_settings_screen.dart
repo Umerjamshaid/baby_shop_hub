@@ -17,6 +17,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   bool _promotions = true;
   bool _cartReminders = true;
 
+  final NotificationService _notificationService = NotificationService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,9 +78,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   void _updateNotificationSubscription(String topic, bool subscribe) {
     if (subscribe) {
-      NotificationService.subscribeToTopic(topic);
+      _notificationService.subscribeToTopic(topic);
     } else {
-      NotificationService.unsubscribeFromTopic(topic);
+      _notificationService.unsubscribeFromTopic(topic);
     }
   }
 }

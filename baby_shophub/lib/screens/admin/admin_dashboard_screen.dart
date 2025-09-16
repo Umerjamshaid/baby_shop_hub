@@ -1,3 +1,4 @@
+import 'package:baby_shophub/screens/admin/notification_management_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -173,6 +174,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       {'icon': Icons.category, 'title': 'Categories', 'color': const Color(0xFFE17055)},
       {'icon': Icons.shopping_cart, 'title': 'Orders', 'color': const Color(0xFFFD79A8)},
       {'icon': Icons.people, 'title': 'Users', 'color': const Color(0xFF74B9FF)},
+      {'icon': Icons.notifications, 'title': 'Notifications', 'color': const Color(0xFFFDCB6E)},
     ];
 
     return Drawer(
@@ -326,6 +328,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const AdminUsersScreen()),
+        );
+        case 5: // Notifications
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const NotificationManagementScreen()),
         );
         break;
     }
@@ -717,7 +724,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         'color': const Color(0xFF00B894),
         'onTap': () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ProductFormScreen()),
+          MaterialPageRoute(builder: (context) => const AdminProductsScreen()),
         ),
       },
       {

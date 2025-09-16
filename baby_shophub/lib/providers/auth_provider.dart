@@ -1,12 +1,16 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
-import '../services/notification_service.dart'; // ✅ Added
+import '../services/notification_service.dart';
+import 'notification_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
 
   UserModel? _currentUser;
   bool _isLoading = false;
@@ -38,6 +42,10 @@ class AuthProvider with ChangeNotifier {
       final isLoggedIn = await _authService.isLoggedIn();
       if (isLoggedIn) {
         _currentUser = await _authService.getCurrentUserData();
+
+        await _notificationService.initialize();
+        await _notificationService.saveTokenToFirestore(_currentUser!.id);
+        _notificationService.listenForTokenChanges(_currentUser!.id);
       }
       return isLoggedIn;
     } catch (e) {
@@ -58,8 +66,6 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
 
-    debugPrint('AuthProvider: Starting sign up process');
-
     try {
       final user = await _authService.signUpWithEmail(
         email,
@@ -70,29 +76,32 @@ class AuthProvider with ChangeNotifier {
 
       if (user != null) {
         _currentUser = user;
-        debugPrint('AuthProvider: Sign up successful');
+
+        await _notificationService.initialize();
+        await _notificationService.saveTokenToFirestore(user.id);
+        _notificationService.listenForTokenChanges(user.id);
+
         return true;
       }
 
       _setError("Failed to create account");
-      debugPrint('AuthProvider: Sign up failed - user is null');
       return false;
     } on FirebaseAuthException catch (e) {
       _setError(_getErrorMessage(e.code));
-      debugPrint(
-        'AuthProvider: Firebase error during sign up: ${e.code} - ${e.message}',
-      );
       return false;
     } catch (e) {
       _setError("An unexpected error occurred");
-      debugPrint('AuthProvider: Unexpected error during sign up: $e');
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<bool> signIn(String email, String password) async {
+  Future<bool> signIn(
+      BuildContext context,
+      String email,
+      String password,
+      ) async {
     _setLoading(true);
     _setError(null);
 
@@ -100,16 +109,22 @@ class AuthProvider with ChangeNotifier {
       final user = await _authService.signInWithEmail(email, password);
       if (user != null) {
         _currentUser = user;
+        _isLoading = false;
+        notifyListeners();
+
+        await _notificationService.initialize();
+        await _notificationService.saveTokenToFirestore(user.id);
+        _notificationService.listenForTokenChanges(user.id);
 
         if (user.isAdministrator) {
-          // ✅ Subscribe admin to admin_orders
-          await NotificationService.subscribeAdminToOrders();
-          debugPrint('Admin user logged in and subscribed to admin_orders');
+          await _notificationService.subscribeAdminToOrders();
         } else {
-          // ✅ Normal user subscribes to their own order updates
-          await NotificationService.subscribeToOrderUpdates(user.id);
-          debugPrint('User subscribed to order updates for: ${user.id}');
+          await _notificationService.subscribeToOrderUpdates(user.id);
         }
+
+        final notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+        notificationProvider.initializeNotifications(user.id);
 
         return true;
       }
@@ -132,12 +147,13 @@ class AuthProvider with ChangeNotifier {
     try {
       if (_currentUser != null) {
         if (_currentUser!.isAdministrator) {
-          // ✅ Unsubscribe admin
-          await NotificationService.unsubscribeAdminFromOrders();
+          await _notificationService.unsubscribeAdminFromOrders();
         } else {
-          // ✅ Unsubscribe regular user
-          await NotificationService.unsubscribeFromOrderUpdates(_currentUser!.id);
+          await _notificationService.unsubscribeFromOrderUpdates(_currentUser!.id);
         }
+
+        // cancel token refresh listener
+        _notificationService.cancelTokenListener();
       }
 
       await _authService.signOut();

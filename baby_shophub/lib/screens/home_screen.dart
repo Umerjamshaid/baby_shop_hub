@@ -1,8 +1,9 @@
+import 'package:baby_shophub/screens/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/cart_provider.dart';
+import '../providers/notification_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/product_model.dart';
@@ -11,7 +12,7 @@ import 'profile_screen.dart';
 import 'products_list_screen.dart';
 import 'orders_screen.dart';
 import 'product_detail_screen.dart';
-import 'advanced_search_screen.dart'; // Add this import
+import 'advanced_search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,6 +111,31 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
+        Consumer2<AuthProvider, NotificationProvider>(
+          builder: (context, authProvider, notificationProvider, _) {
+            final userId = authProvider.currentUser?.id;
+            final unreadCount = userId != null
+                ? notificationProvider.unreadCount(userId)
+                : 0;
+
+            return Badge(
+              label: Text(unreadCount.toString()),
+              isLabelVisible: unreadCount > 0,
+              child: IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        )
+
       ],
     );
   }
@@ -228,21 +254,16 @@ class AdvancedSearchDelegate extends SearchDelegate {
         if (query.isEmpty) {
           return _buildPopularSearches(context);
         }
-
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError || snapshot.data == null) {
           return const Center(child: Text('Error loading suggestions'));
         }
-
         final suggestions = snapshot.data!;
-
         if (suggestions.isEmpty) {
           return const Center(child: Text('No suggestions found'));
         }
-
         return ListView.builder(
           itemCount: suggestions.length,
           itemBuilder: (context, index) {
@@ -269,13 +290,10 @@ class AdvancedSearchDelegate extends SearchDelegate {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError || snapshot.data == null) {
           return const Center(child: Text('Error loading popular searches'));
         }
-
         final popularSearches = snapshot.data!;
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -332,13 +350,24 @@ class _HomeContentState extends State<HomeContent> {
     final productProvider = Provider.of<ProductProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-
     productProvider.loadAllProducts();
     productProvider.loadFeaturedProducts();
-
     if (authProvider.currentUser != null) {
       cartProvider.loadUserCart(authProvider.currentUser!.id);
     }
+  }
+
+  // Enhanced navigation method for products list
+  void _navigateToProductsList(String? category) {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    // Clear any existing filters before navigating
+    productProvider.clearFilters();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductsListScreen(category: category),
+      ),
+    );
   }
 
   @override
@@ -348,11 +377,9 @@ class _HomeContentState extends State<HomeContent> {
         if (productProvider.isLoading) {
           return _buildLoadingState();
         }
-
         if (productProvider.error != null) {
           return _buildErrorState(productProvider.error!);
         }
-
         return RefreshIndicator(
           onRefresh: () async {
             _loadData();
@@ -387,12 +414,7 @@ class _HomeContentState extends State<HomeContent> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProductsListScreen(),
-                        ),
-                      );
+                      _navigateToProductsList(null); // Navigate to all products
                     },
                     child: const Text('View All Products',
                         style: TextStyle(color: Colors.white, fontSize: 16)),
@@ -476,7 +498,6 @@ class _HomeContentState extends State<HomeContent> {
       {'name': 'Health', 'icon': '❤️', 'color': const Color(0xFFF44336)},
       {'name': 'More', 'icon': '➕', 'color': Colors.grey},
     ];
-
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -489,57 +510,58 @@ class _HomeContentState extends State<HomeContent> {
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductsListScreen(
-                  category: category['name'] as String,
-                ),
-              ),
-            );
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: (category['color'] as Color).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(category['icon'] as String,
-                      style: const TextStyle(fontSize: 20)),
-                ),
-                const SizedBox(height: 8),
-                Text(category['name'] as String,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
+        return _buildCategoryCard(
+          context,
+          category['name'] as String,
+          category['icon'] as String,
+          category['color'] as Color,
         );
       },
     );
   }
 
+  // Enhanced category card with proper navigation
+  Widget _buildCategoryCard(BuildContext context, String title, String emoji, Color color) {
+    return GestureDetector(
+      onTap: () {
+        _navigateToProductsList(title); // Use the enhanced navigation method
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 20)),
+            ),
+            const SizedBox(height: 8),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFeaturedProducts(ProductProvider productProvider) {
     final featuredProducts = productProvider.featuredProducts.take(4).toList();
-
     return SizedBox(
       height: 240,
       child: ListView.builder(
@@ -549,7 +571,6 @@ class _HomeContentState extends State<HomeContent> {
           if (featuredProducts.isEmpty) {
             return _buildProductPlaceholder();
           }
-
           final product = featuredProducts[index];
           return _buildProductItem(product);
         },
@@ -584,7 +605,7 @@ class _HomeContentState extends State<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image - FIXED: Using actual product image
+            // Product Image
             Container(
               height: 120,
               decoration: BoxDecoration(
@@ -657,7 +678,29 @@ class _HomeContentState extends State<HomeContent> {
                           ),
                         ),
                         onPressed: () {
-                          // Add to cart functionality
+                          // FIXED: Enhanced add to cart functionality
+                          final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          if (authProvider.currentUser != null) {
+                            // Fixed the parameter order - product first, then user ID
+                            cartProvider.addToCart(authProvider.currentUser!.id, product);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} added to cart'),
+                                backgroundColor: const Color(0xFF6B73FF),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else {
+                            // Handle user not logged in
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please log in to add items to cart'),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                         child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
                       ),

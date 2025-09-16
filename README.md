@@ -12,7 +12,7 @@
 
 BabyShopHub is a cutting-edge Flutter-based e-commerce mobile application designed exclusively for baby products. Built with modern architecture, robust Firebase backend, and intuitive user experience, it offers a comprehensive shopping platform that combines security, performance, and ease of use. Whether you're a new parent or a seasoned caregiver, discover everything your little one needs in one beautifully crafted app.
 
-![App Banner](../appstore.png)
+![App Banner](./appstore.png)
 
 ## 🌟 Key Highlights
 
@@ -206,7 +206,7 @@ baby_shophub/
 ### App Screenshots
 | Home Screen/Admin Screen | Product Details/Profile Screen | Shopping Cart | User Profile |
 |-------------|----------------|---------------|--------------|
-| ![Home](assets/images/700shots_so.png) | ![Product](assets/images/534shots_so.png) | ![Cart](assets/images/851shots_so.png) | ![Profile](assets/images/490shots_so.png) |
+| ![Home](baby_shophub/assets/images/700shots_so.png) | ![Product](baby_shophub/assets/images/534shots_so.png) | ![Cart](baby_shophub/assets/images/851shots_so.png) | ![Profile](baby_shophub/assets/images/490shots_so.png) |
 
 ### Demo GIF
 ![App Demo](https://via.placeholder.com/600x400?text=App+Demo+GIF)

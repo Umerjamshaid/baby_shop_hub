@@ -9,7 +9,8 @@ class UserModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final List<Address> addresses;
-  final List<String> favoriteProducts; // ✅ Added favorites
+  final List<String> favoriteProducts; // ✅ Favorites
+  final List<String> fcmTokens;        // ✅ FCM Tokens
   final bool isAdmin;
   final String role;
 
@@ -22,7 +23,8 @@ class UserModel {
     required this.createdAt,
     this.updatedAt,
     this.addresses = const [],
-    this.favoriteProducts = const [], // ✅ Default empty list
+    this.favoriteProducts = const [],
+    this.fcmTokens = const [], // ✅ Default empty list
     this.isAdmin = false,
     this.role = 'user',
   });
@@ -37,7 +39,8 @@ class UserModel {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'addresses': addresses.map((address) => address.toMap()).toList(),
-      'favoriteProducts': favoriteProducts, // ✅ Saved to Firestore/DB
+      'favoriteProducts': favoriteProducts,
+      'fcmTokens': fcmTokens, // ✅ Save tokens
       'isAdmin': isAdmin,
       'role': role,
     };
@@ -55,7 +58,8 @@ class UserModel {
       addresses: List<Address>.from(
         (map['addresses'] as List? ?? []).map((x) => Address.fromMap(x)),
       ),
-      favoriteProducts: List<String>.from(map['favoriteProducts'] ?? []), // ✅ Safe parse
+      favoriteProducts: List<String>.from(map['favoriteProducts'] ?? []),
+      fcmTokens: List<String>.from(map['fcmTokens'] ?? []), // ✅ Load tokens
       isAdmin: map['isAdmin'] ?? false,
       role: map['role'] ?? 'user',
     );
@@ -87,6 +91,7 @@ class UserModel {
     DateTime? updatedAt,
     List<Address>? addresses,
     List<String>? favoriteProducts,
+    List<String>? fcmTokens,
     bool? isAdmin,
     String? role,
   }) {
@@ -99,7 +104,8 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       addresses: addresses ?? this.addresses,
-      favoriteProducts: favoriteProducts ?? this.favoriteProducts, // ✅ Preserved
+      favoriteProducts: favoriteProducts ?? this.favoriteProducts,
+      fcmTokens: fcmTokens ?? this.fcmTokens, // ✅ Preserve tokens
       isAdmin: isAdmin ?? this.isAdmin,
       role: role ?? this.role,
     );
@@ -153,10 +159,8 @@ class Address {
     );
   }
 
-  // ✅ Full address text
   String get fullAddress => '$street, $city, $state $zipCode';
 
-  // ✅ Copy with
   Address copyWith({
     String? id,
     String? name,
@@ -179,7 +183,6 @@ class Address {
     );
   }
 
-  // ✅ Conversion helper for orders
   ShippingAddress toShippingAddress() {
     return ShippingAddress(
       id: id,

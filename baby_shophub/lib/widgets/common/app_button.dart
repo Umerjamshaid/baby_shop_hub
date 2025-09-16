@@ -6,7 +6,8 @@ class AppButton extends StatelessWidget {
   final double? width;
   final String variant; // 'primary', 'secondary', 'outline'
   final String? size; // 'small', 'medium', 'large'
-  final Color? color; // Custom color
+  final Color? color;
+  final bool loading; // ✅ make it bool
 
   const AppButton({
     super.key,
@@ -16,6 +17,7 @@ class AppButton extends StatelessWidget {
     this.variant = 'primary',
     this.size,
     this.color,
+    this.loading = false, // ✅ default false
   });
 
   @override
@@ -29,23 +31,6 @@ class AppButton extends StatelessWidget {
     double horizontalPadding;
     double fontSize;
 
-    switch (variant) {
-      case 'secondary':
-        backgroundColor = theme.colorScheme.secondary;
-        foregroundColor = Colors.white;
-        borderColor = theme.colorScheme.secondary;
-        break;
-      case 'outline':
-        backgroundColor = Colors.transparent;
-        foregroundColor = theme.primaryColor;
-        borderColor = theme.primaryColor;
-        break;
-      default: // primary
-        backgroundColor = theme.primaryColor;
-        foregroundColor = Colors.white;
-        borderColor = theme.primaryColor;
-
-    }
     // Set size-based properties
     switch (size) {
       case 'small':
@@ -64,9 +49,7 @@ class AppButton extends StatelessWidget {
         fontSize = 16;
     }
 
-
-
-
+    // Variant styles
     switch (variant) {
       case 'secondary':
         backgroundColor = color ?? theme.colorScheme.secondary;
@@ -84,23 +67,37 @@ class AppButton extends StatelessWidget {
         borderColor = color ?? theme.primaryColor;
     }
 
-
     return SizedBox(
       width: width,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: loading ? null : onPressed, // ✅ disable when loading
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: foregroundColor,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(
+            vertical: verticalPadding,
+            horizontal: horizontalPadding,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: borderColor),
           ),
         ),
-        child: Text(
+        child: loading
+            ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
+            : Text(
           text,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

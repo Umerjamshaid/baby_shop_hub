@@ -31,7 +31,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      bool success = await authProvider.signIn(
+      bool success = await Provider.of<AuthProvider>(context, listen: false).signIn(
+        context, // ✅ First argument
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );

@@ -8,8 +8,8 @@ class AppConstants {
   static const String categoriesCollection = 'categories';
   static const String ordersCollection = 'orders';
   static const String cartCollection = 'cart';
-  // Add to AppConstants class
-  static const String reviewsCollection = 'reviews';
+  static const String reviewsCollection = 'reviews'; // ✅ keep this
+  static const String notificationsCollection = 'notifications'; // ✅ added
 
   // Storage paths
   static const String userImagesPath = 'user_images';
@@ -42,6 +42,7 @@ class AppConstants {
     'Delivered',
     'Cancelled',
   ];
+
   // Filter options
   static const List<String> sortOptions = [
     'Relevance',
@@ -53,6 +54,7 @@ class AppConstants {
     'Biggest Discount',
   ];
 
+  // Age ranges
   static const List<String> ageRanges = [
     'Newborn (0-3M)',
     '3-6 Months',
@@ -65,6 +67,7 @@ class AppConstants {
     '4+ Years',
   ];
 
+  // Sizes
   static const List<String> sizes = [
     'Newborn',
     '0-3M',
@@ -79,6 +82,7 @@ class AppConstants {
     '5T',
   ];
 
+  // Colors
   static const List<String> colors = [
     'White',
     'Black',
@@ -94,6 +98,7 @@ class AppConstants {
     'Multi-color',
   ];
 
+  // Materials
   static const List<String> materials = [
     'Cotton',
     'Organic Cotton',
