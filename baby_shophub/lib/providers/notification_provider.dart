@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -30,37 +29,44 @@ class NotificationProvider with ChangeNotifier {
 
     _notificationSubscription = FirebaseFirestore.instance
         .collection(AppConstants.notificationsCollection)
-        .where('userIds', arrayContains: userId)
+        .where('userIds', arrayContainsAny: [userId, 'all'])
         .orderBy('sentAt', descending: true)
         .snapshots()
-        .listen((snapshot) async {
-      final newNotifications = snapshot.docs
-          .map((doc) => NotificationModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+        .listen(
+          (snapshot) async {
+            final newNotifications = snapshot.docs
+                .map(
+                  (doc) => NotificationModel.fromMap(
+                    doc.data() as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
 
-      // 🔔 Detect only when a new notification arrives
-      if (_notifications.isNotEmpty && newNotifications.isNotEmpty) {
-        final latestOldId = _notifications.first.id;
-        final latestNewId = newNotifications.first.id;
+            // 🔔 Detect only when a new notification arrives
+            if (_notifications.isNotEmpty && newNotifications.isNotEmpty) {
+              final latestOldId = _notifications.first.id;
+              final latestNewId = newNotifications.first.id;
 
-        if (latestNewId != latestOldId) {
-          final newest = newNotifications.first;
-          await _notificationService.showLocalNotification(
-            title: newest.title,
-            body: newest.message,
-            payload: newest.data?['type'] ?? 'general',
-          );
-        }
-      }
+              if (latestNewId != latestOldId) {
+                final newest = newNotifications.first;
+                await _notificationService.showLocalNotification(
+                  title: newest.title,
+                  body: newest.message,
+                  payload: newest.data?['type'] ?? 'general',
+                );
+              }
+            }
 
-      _notifications = newNotifications;
-      _isLoading = false;
-      notifyListeners();
-    }, onError: (error) {
-      _error = error.toString();
-      _isLoading = false;
-      notifyListeners();
-    });
+            _notifications = newNotifications;
+            _isLoading = false;
+            notifyListeners();
+          },
+          onError: (error) {
+            _error = error.toString();
+            _isLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   // ✅ Load notifications once (manual refresh)

@@ -1,5 +1,10 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -9,6 +14,10 @@ import 'navigation_service.dart';
 
 // Top-level background handler required by Firebase Messaging
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase in background isolate to avoid plugin exceptions
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
   // Keep lightweight; actual navigation happens when app resumes
 }
 
@@ -58,6 +67,12 @@ class NotificationService {
       },
     );
 
+    await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     // Ensure Android notification channel exists for heads-up notifications
@@ -74,9 +89,13 @@ class NotificationService {
         >();
     await androidPlugin?.createNotificationChannel(channel);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('🔔 onMessage: ${message.messageId}, data=${message.data}');
       _showNotification(message);
     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print(
+        '➡️ onMessageOpenedApp: ${message.messageId}, data=${message.data}',
+      );
       _handleMessage(message);
     });
 
@@ -103,6 +122,28 @@ class NotificationService {
       }
     } catch (e) {
       print('❌ Failed to save token: $e');
+    }
+  }
+
+  Future<void> reconcileCurrentToken(String userId) async {
+    try {
+      final String? token = await _firebaseMessaging.getToken();
+      if (token == null) return;
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId);
+      final snap = await userRef.get();
+      if (!snap.exists) return;
+      final data = snap.data() as Map<String, dynamic>;
+      final List<dynamic> existing = (data['fcmTokens'] ?? []) as List<dynamic>;
+      if (!existing.contains(token)) {
+        await userRef.update({
+          'fcmTokens': FieldValue.arrayUnion([token]),
+        });
+        print('🔧 Reconciled token for user: $userId');
+      }
+    } catch (e) {
+      print('❌ Failed to reconcile token: $e');
     }
   }
 
@@ -136,20 +177,20 @@ class NotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      final notification = NotificationModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        message: message,
-        userIds: userIds,
-        imageUrl: imageUrl,
-        data: data,
-        sentAt: DateTime.now(),
-      );
-
+      final String id = DateTime.now().millisecondsSinceEpoch.toString();
       await _firestore
           .collection(AppConstants.notificationsCollection)
-          .doc(notification.id)
-          .set(notification.toMap());
+          .doc(id)
+          .set({
+            'id': id,
+            'title': title,
+            'message': message,
+            'userIds': userIds,
+            'imageUrl': imageUrl,
+            'data': data,
+            'sentAt': FieldValue.serverTimestamp(),
+            'readBy': <String>[],
+          });
 
       print('📩 Notification saved: $title');
     } catch (e) {
@@ -185,7 +226,7 @@ class NotificationService {
     try {
       final snapshot = await _firestore
           .collection(AppConstants.notificationsCollection)
-          .where('userIds', arrayContains: userId)
+          .where('userIds', arrayContainsAny: [userId, 'all'])
           .orderBy('sentAt', descending: true)
           .get();
 
@@ -217,18 +258,41 @@ class NotificationService {
   // Background handled by top-level function
 
   Future<void> _showNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
+    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'order_updates',
+      'Order Updates',
+      channelDescription: 'Notifications for order status updates',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    final String? imageUrl =
+        message.data['imageUrl'] ??
+        message.notification?.android?.imageUrl ??
+        message.notification?.apple?.imageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      try {
+        final String filePath = await _downloadToTemp(imageUrl);
+        final BigPictureStyleInformation styleInformation =
+            BigPictureStyleInformation(
+              FilePathAndroidBitmap(filePath),
+              contentTitle: message.notification?.title,
+              summaryText: message.notification?.body,
+            );
+        androidDetails = AndroidNotificationDetails(
           'order_updates',
           'Order Updates',
           channelDescription: 'Notifications for order status updates',
           importance: Importance.max,
           priority: Priority.high,
+          styleInformation: styleInformation,
         );
+      } catch (_) {}
+    }
 
     const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails();
 
-    const NotificationDetails platformDetails = NotificationDetails(
+    final NotificationDetails platformDetails = NotificationDetails(
       android: androidDetails,
       iOS: iOSDetails,
     );
@@ -240,6 +304,19 @@ class NotificationService {
       platformDetails,
       payload: message.data['type'] ?? 'general',
     );
+  }
+
+  Future<String> _downloadToTemp(String url) async {
+    final HttpClient client = HttpClient();
+    final HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    final HttpClientResponse response = await request.close();
+    final Uint8List bytes = await consolidateHttpClientResponseBytes(response);
+    final Directory dir = await getTemporaryDirectory();
+    final String filePath =
+        '${dir.path}/n_${DateTime.now().millisecondsSinceEpoch}.img';
+    final File file = File(filePath);
+    await file.writeAsBytes(bytes);
+    return filePath;
   }
 
   void _handleMessage(RemoteMessage message) {

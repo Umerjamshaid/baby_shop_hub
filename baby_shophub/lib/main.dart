@@ -9,6 +9,7 @@ import 'package:baby_shophub/utils/connectivity_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
@@ -31,6 +32,12 @@ void main() async {
   // ✅ Only initialize notifications (don’t send test ones here)
   final notificationService = NotificationService();
   await notificationService.initialize();
+  // Print FCM token early for debugging
+  try {
+    final token = await FirebaseMessaging.instance.getToken();
+    // ignore: avoid_print
+    print('FCM TOKEN => $token');
+  } catch (_) {}
 
   runApp(const MyApp());
 }

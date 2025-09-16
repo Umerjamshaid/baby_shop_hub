@@ -55,6 +55,7 @@ exports.onNotificationCreated = functions.firestore
         },
         data: {
           type: payloadData.type || 'general',
+          ...(imageUrl ? { imageUrl } : {}),
           ...Object.keys(payloadData).reduce((acc, key) => {
             acc[key] = String(payloadData[key]);
             return acc;

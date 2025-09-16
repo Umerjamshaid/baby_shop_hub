@@ -45,6 +45,7 @@ class AuthProvider with ChangeNotifier {
 
         await _notificationService.initialize();
         await _notificationService.saveTokenToFirestore(_currentUser!.id);
+        await _notificationService.reconcileCurrentToken(_currentUser!.id);
         _notificationService.listenForTokenChanges(_currentUser!.id);
       }
       return isLoggedIn;
@@ -57,12 +58,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> signUp(
-      String email,
-      String password,
-      String name,
-      String? phone, {
-        String role = 'user',
-      }) async {
+    String email,
+    String password,
+    String name,
+    String? phone, {
+    String role = 'user',
+  }) async {
     _setLoading(true);
     _setError(null);
 
@@ -79,6 +80,7 @@ class AuthProvider with ChangeNotifier {
 
         await _notificationService.initialize();
         await _notificationService.saveTokenToFirestore(user.id);
+        await _notificationService.reconcileCurrentToken(user.id);
         _notificationService.listenForTokenChanges(user.id);
 
         return true;
@@ -98,10 +100,10 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> signIn(
-      BuildContext context,
-      String email,
-      String password,
-      ) async {
+    BuildContext context,
+    String email,
+    String password,
+  ) async {
     _setLoading(true);
     _setError(null);
 
@@ -114,6 +116,7 @@ class AuthProvider with ChangeNotifier {
 
         await _notificationService.initialize();
         await _notificationService.saveTokenToFirestore(user.id);
+        await _notificationService.reconcileCurrentToken(user.id);
         _notificationService.listenForTokenChanges(user.id);
 
         if (user.isAdministrator) {
@@ -122,8 +125,10 @@ class AuthProvider with ChangeNotifier {
           await _notificationService.subscribeToOrderUpdates(user.id);
         }
 
-        final notificationProvider =
-        Provider.of<NotificationProvider>(context, listen: false);
+        final notificationProvider = Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        );
         notificationProvider.initializeNotifications(user.id);
 
         return true;
@@ -149,7 +154,9 @@ class AuthProvider with ChangeNotifier {
         if (_currentUser!.isAdministrator) {
           await _notificationService.unsubscribeAdminFromOrders();
         } else {
-          await _notificationService.unsubscribeFromOrderUpdates(_currentUser!.id);
+          await _notificationService.unsubscribeFromOrderUpdates(
+            _currentUser!.id,
+          );
         }
 
         // cancel token refresh listener
