@@ -48,9 +48,24 @@ class ProductProvider with ChangeNotifier {
 
   // 🔹 Load all products
   Future<void> loadAllProducts() async {
+    _isLoading = true;
+    _error = null;
     _currentCategory = null;
     _currentSearchQuery = null;
-    await loadProductsWithFilters(SearchFilters());
+    _currentFilters = SearchFilters(); // Reset filters completely
+    notifyListeners();
+
+    try {
+      _allProducts = await _productService
+          .getAllProducts(); // Use getAllProducts to get everything
+      _filteredProducts = _allProducts;
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // 🔹 Load featured products
@@ -109,7 +124,9 @@ class ProductProvider with ChangeNotifier {
         sortedProducts.sort((a, b) => a.name.compareTo(b.name));
         break;
       case 'discount':
-        sortedProducts.sort((a, b) => b.discountPercentage.compareTo(a.discountPercentage));
+        sortedProducts.sort(
+          (a, b) => b.discountPercentage.compareTo(a.discountPercentage),
+        );
         break;
     }
 
@@ -119,11 +136,11 @@ class ProductProvider with ChangeNotifier {
 
   // 🔹 Clear filters/search
   void clearFilters() {
-    _filteredProducts = _allProducts;
     _currentCategory = null;
     _currentSearchQuery = null;
     _currentFilters = SearchFilters();
-    notifyListeners();
+    // Don't just reset filteredProducts, actually reload all products
+    loadAllProducts();
   }
 
   // 🔹 Clear error
@@ -137,6 +154,8 @@ class ProductProvider with ChangeNotifier {
   Future<List<String>> getAgeRanges() => _productService.getAgeRanges();
   Future<List<String>> getSizes() => _productService.getSizes();
   Future<List<String>> getColors() => _productService.getColors();
-  Future<List<String>> getSearchSuggestions(String query) => _productService.getSearchSuggestions(query);
-  Future<List<String>> getPopularSearches() => _productService.getPopularSearches();
+  Future<List<String>> getSearchSuggestions(String query) =>
+      _productService.getSearchSuggestions(query);
+  Future<List<String>> getPopularSearches() =>
+      _productService.getPopularSearches();
 }

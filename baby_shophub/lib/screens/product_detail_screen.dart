@@ -9,6 +9,7 @@ import '../providers/favorites_provider.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/product/reviews_list.dart';
 import 'add_review_screen.dart';
+import 'reviews_analytics_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -65,28 +66,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           authProvider.currentUser!.id,
           widget.product.id,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from favorites')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Removed from favorites')));
       } else {
         await favoritesProvider.addToFavorites(
           authProvider.currentUser!.id,
           widget.product.id,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to favorites')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update favorites: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update favorites: $e')));
     }
   }
 
   void _shareProduct() {
     final product = widget.product;
-    final shareText = '''
+    final shareText =
+        '''
 🌟 Check out this amazing baby product! 🌟
 
 ${product.name}
@@ -413,14 +415,14 @@ Get it now on BabyShopHub! 🛍️
                           ),
                           boxShadow: _currentImageIndex == index
                               ? [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
+                                  BoxShadow(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
                               : null,
                         ),
                         child: ClipRRect(
@@ -559,9 +561,6 @@ Get it now on BabyShopHub! 🛍️
   }
 
   Widget _buildStockIndicator() {
-    final stockPercentage =
-        widget.product.stock / 100; // Assuming max stock is 100
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -838,8 +837,40 @@ Get it now on BabyShopHub! 🛍️
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
+                      // Reviews Analytics Button
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReviewsAnalyticsScreen(
+                                  product: widget.product,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.analytics),
+                          label: const Text('View Reviews Analytics'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple[50],
+                            foregroundColor: Colors.purple[700],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.purple[200]!),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Reviews List with constrained height
                       Expanded(
-                        child: ReviewsList(productId: widget.product.id),
+                        child: ReviewsList(
+                          productId: widget.product.id,
+                          showHeader: false, // Hide header to save space
+                        ),
                       ),
                       if (authProvider.currentUser != null) ...[
                         const SizedBox(height: 12),
@@ -866,7 +897,7 @@ Get it now on BabyShopHub! 🛍️
                           ),
                         ),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -980,11 +1011,11 @@ Get it now on BabyShopHub! 🛍️
   }
 
   Widget _buildShippingOption(
-      String title,
-      String duration,
-      String price,
-      IconData icon,
-      ) {
+    String title,
+    String duration,
+    String price,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1036,9 +1067,9 @@ Get it now on BabyShopHub! 🛍️
   }
 
   Widget _buildFloatingAddToCartButton(
-      CartProvider cartProvider,
-      AuthProvider authProvider,
-      ) {
+    CartProvider cartProvider,
+    AuthProvider authProvider,
+  ) {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1067,7 +1098,7 @@ Get it now on BabyShopHub! 🛍️
           _showAddToCartSuccess();
         },
         text:
-        'Add to Cart • \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+            'Add to Cart • \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
         width: double.infinity,
       ),
     );

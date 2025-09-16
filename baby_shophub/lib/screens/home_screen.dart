@@ -55,19 +55,19 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       elevation: 0.5,
       centerTitle: false,
-      title: const Text('BabyShopHub',
-          style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 20)),
+      title: const Text(
+        'BabyShopHub',
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
       actions: [
         IconButton(
           icon: const Icon(Icons.search, size: 28),
           onPressed: () {
-            showSearch(
-              context: context,
-              delegate: AdvancedSearchDelegate(),
-            );
+            showSearch(context: context, delegate: AdvancedSearchDelegate());
           },
         ),
         Consumer<CartProvider>(
@@ -75,7 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
             return Stack(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black54),
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.black54,
+                  ),
                   onPressed: () {
                     setState(() {
                       _currentIndex = 2.clamp(0, _screens.length - 1);
@@ -134,8 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           },
-        )
-
+        ),
       ],
     );
   }
@@ -220,9 +222,7 @@ class AdvancedSearchDelegate extends SearchDelegate {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AdvancedSearchScreen(
-                initialCategory: null,
-              ),
+              builder: (context) => AdvancedSearchScreen(initialCategory: null),
             ),
           );
         },
@@ -248,8 +248,10 @@ class AdvancedSearchDelegate extends SearchDelegate {
   @override
   Widget buildSuggestions(BuildContext context) {
     return FutureBuilder<List<String>>(
-      future: Provider.of<ProductProvider>(context, listen: false)
-          .getSearchSuggestions(query),
+      future: Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      ).getSearchSuggestions(query),
       builder: (context, snapshot) {
         if (query.isEmpty) {
           return _buildPopularSearches(context);
@@ -284,8 +286,10 @@ class AdvancedSearchDelegate extends SearchDelegate {
 
   Widget _buildPopularSearches(BuildContext context) {
     return FutureBuilder<List<String>>(
-      future: Provider.of<ProductProvider>(context, listen: false)
-          .getPopularSearches(),
+      future: Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      ).getPopularSearches(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -301,10 +305,7 @@ class AdvancedSearchDelegate extends SearchDelegate {
               padding: EdgeInsets.all(16),
               child: Text(
                 'Popular Searches',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             Expanded(
@@ -347,7 +348,10 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   void _loadData() {
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     productProvider.loadAllProducts();
@@ -359,9 +363,16 @@ class _HomeContentState extends State<HomeContent> {
 
   // Enhanced navigation method for products list
   void _navigateToProductsList(String? category) {
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
-    // Clear any existing filters before navigating
-    productProvider.clearFilters();
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+
+    if (category == null) {
+      // If navigating to "All Products", clear all filters first
+      productProvider.clearFilters();
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -393,13 +404,17 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 _buildPromoBanner(),
                 const SizedBox(height: 24),
-                const Text('Categories',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Categories',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 _buildCategoryGrid(),
                 const SizedBox(height: 24),
-                const Text('Featured Products',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Featured Products',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 _buildFeaturedProducts(productProvider),
                 const SizedBox(height: 24),
@@ -416,8 +431,10 @@ class _HomeContentState extends State<HomeContent> {
                     onPressed: () {
                       _navigateToProductsList(null); // Navigate to all products
                     },
-                    child: const Text('View All Products',
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                    child: const Text(
+                      'View All Products',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -460,21 +477,29 @@ class _HomeContentState extends State<HomeContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('30% OFF',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                Text(
+                  '30% OFF',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
                 SizedBox(height: 4),
-                Text('On all baby clothing',
-                    style: TextStyle(color: Colors.white, fontSize: 14)),
+                Text(
+                  'On all baby clothing',
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
                 Spacer(),
                 Row(
                   children: [
-                    Text('Shop Now',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'Shop Now',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     SizedBox(width: 8),
                     Icon(Icons.arrow_forward, size: 16, color: Colors.white),
                   ],
@@ -521,7 +546,12 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   // Enhanced category card with proper navigation
-  Widget _buildCategoryCard(BuildContext context, String title, String emoji, Color color) {
+  Widget _buildCategoryCard(
+    BuildContext context,
+    String title,
+    String emoji,
+    Color color,
+  ) {
     return GestureDetector(
       onTap: () {
         _navigateToProductsList(title); // Use the enhanced navigation method
@@ -550,10 +580,11 @@ class _HomeContentState extends State<HomeContent> {
               child: Text(emoji, style: const TextStyle(fontSize: 20)),
             ),
             const SizedBox(height: 8),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ),
@@ -626,7 +657,11 @@ class _HomeContentState extends State<HomeContent> {
                   width: double.infinity,
                   errorBuilder: (context, error, stackTrace) {
                     return Center(
-                      child: Icon(Icons.image, color: Colors.grey[400], size: 40),
+                      child: Icon(
+                        Icons.image,
+                        color: Colors.grey[400],
+                        size: 40,
+                      ),
                     );
                   },
                   loadingBuilder: (context, child, loadingProgress) {
@@ -635,7 +670,7 @@ class _HomeContentState extends State<HomeContent> {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     );
@@ -652,25 +687,34 @@ class _HomeContentState extends State<HomeContent> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Flexible(
-                      child: Text(product.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500)),
+                      child: Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text(product.formattedPrice,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF6B73FF))),
+                    Text(
+                      product.formattedPrice,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6B73FF),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       height: 32,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B73FF).withOpacity(0.1),
+                          backgroundColor: const Color(
+                            0xFF6B73FF,
+                          ).withOpacity(0.1),
                           foregroundColor: const Color(0xFF6B73FF),
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
@@ -679,11 +723,20 @@ class _HomeContentState extends State<HomeContent> {
                         ),
                         onPressed: () {
                           // FIXED: Enhanced add to cart functionality
-                          final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          final cartProvider = Provider.of<CartProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final authProvider = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
                           if (authProvider.currentUser != null) {
                             // Fixed the parameter order - product first, then user ID
-                            cartProvider.addToCart(authProvider.currentUser!.id, product);
+                            cartProvider.addToCart(
+                              authProvider.currentUser!.id,
+                              product,
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('${product.name} added to cart'),
@@ -695,14 +748,19 @@ class _HomeContentState extends State<HomeContent> {
                             // Handle user not logged in
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Please log in to add items to cart'),
+                                content: Text(
+                                  'Please log in to add items to cart',
+                                ),
                                 backgroundColor: Colors.red,
                                 duration: Duration(seconds: 2),
                               ),
                             );
                           }
                         },
-                        child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          'Add to Cart',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     ),
                   ],
@@ -753,17 +811,9 @@ class _HomeContentState extends State<HomeContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    height: 16,
-                    width: 100,
-                    color: Colors.grey[300],
-                  ),
+                  Container(height: 16, width: 100, color: Colors.grey[300]),
                   const SizedBox(height: 8),
-                  Container(
-                    height: 14,
-                    width: 60,
-                    color: Colors.grey[300],
-                  ),
+                  Container(height: 14, width: 60, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Container(
                     height: 32,
@@ -890,7 +940,10 @@ class _HomeContentState extends State<HomeContent> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6B73FF),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -898,8 +951,10 @@ class _HomeContentState extends State<HomeContent> {
               onPressed: () {
                 _loadData();
               },
-              child: const Text('Try Again',
-                  style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ),
           ],
         ),

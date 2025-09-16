@@ -34,13 +34,15 @@ class NotificationProvider with ChangeNotifier {
         .snapshots()
         .listen(
           (snapshot) async {
-            final newNotifications = snapshot.docs
-                .map(
-                  (doc) => NotificationModel.fromMap(
-                    doc.data() as Map<String, dynamic>,
-                  ),
-                )
-                .toList();
+            final newNotifications =
+                snapshot.docs
+                    .map(
+                      (doc) => NotificationModel.fromMap(
+                        doc.data() as Map<String, dynamic>,
+                      ),
+                    )
+                    .toList()
+                  ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
 
             // 🔔 Detect only when a new notification arrives
             if (_notifications.isNotEmpty && newNotifications.isNotEmpty) {
@@ -76,6 +78,8 @@ class NotificationProvider with ChangeNotifier {
 
     try {
       _notifications = await _notificationService.getUserNotifications(userId);
+      // Ensure newest first
+      _notifications.sort((a, b) => b.sentAt.compareTo(a.sentAt));
       _isLoading = false;
       notifyListeners();
     } catch (e) {

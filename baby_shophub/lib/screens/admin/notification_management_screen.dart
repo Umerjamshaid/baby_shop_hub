@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:awesome_notifications/awesome_notifications.dart' as awesome;
 
 import '../../services/user_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/user_model.dart';
 import '../../widgets/common/app_button.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 class NotificationManagementScreen extends StatefulWidget {
   const NotificationManagementScreen({super.key});
@@ -254,19 +257,19 @@ class _NotificationManagementScreenState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        child: Column(
-          children: [
-            // Notification Form
-            _buildNotificationForm(),
+              child: Column(
+                children: [
+                  // Notification Form
+                  _buildNotificationForm(),
 
-            // User Selection
-            _buildUserList(),
+                  // User Selection
+                  _buildUserList(),
 
-            // Action Buttons
-            _buildActionButtons(),
-          ],
-        ),
-      ),
+                  // Action Buttons
+                  _buildActionButtons(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -318,6 +321,23 @@ class _NotificationManagementScreenState
               label: 'Image URL (optional)',
               icon: Icons.image,
             ),
+            const SizedBox(height: 8),
+            if (_imageUrlController.text.trim().isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  _imageUrlController.text.trim(),
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 120,
+                    alignment: Alignment.center,
+                    color: Colors.grey[200],
+                    child: const Text('Invalid image URL'),
+                  ),
+                ),
+              ),
             const SizedBox(height: 10),
             _buildCompactTextField(
               controller: _dataController,
@@ -333,7 +353,10 @@ class _NotificationManagementScreenState
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 title: const Text(
                   'Send to all users',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
@@ -383,7 +406,10 @@ class _NotificationManagementScreenState
             borderSide: const BorderSide(color: Colors.blue),
           ),
           labelStyle: const TextStyle(fontSize: 13),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           isDense: true,
         ),
       ),
@@ -432,7 +458,9 @@ class _NotificationManagementScreenState
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
                             isDense: true,
                           ),
                         ),
@@ -455,7 +483,10 @@ class _NotificationManagementScreenState
                     ),
                     const Text(
                       'Select All',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Transform.scale(
@@ -490,7 +521,10 @@ class _NotificationManagementScreenState
                   child: CheckboxListTile(
                     title: Text(
                       user.name,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     subtitle: Text(
                       user.email,
@@ -509,7 +543,10 @@ class _NotificationManagementScreenState
                       child: const Icon(Icons.person, size: 18),
                     ),
                     dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     controlAffinity: ListTileControlAffinity.trailing,
                   ),
                 );
@@ -556,6 +593,67 @@ class _NotificationManagementScreenState
               child: AppButton(
                 onPressed: _sendNotification,
                 text: 'Send to Selected',
+                loading: _sending,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 44,
+              child: AppButton(
+                onPressed: () async {
+                  if (_titleController.text.isEmpty ||
+                      _messageController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter title and message'),
+                      ),
+                    );
+                    return;
+                  }
+                  setState(() {
+                    _sending = true;
+                  });
+                  try {
+                    final auth = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    );
+                    if (auth.currentUser == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No logged-in user')),
+                      );
+                      return;
+                    }
+                    await _notificationService.sendNotificationToUsers(
+                      title: _titleController.text,
+                      message: _messageController.text,
+                      userIds: [auth.currentUser!.id],
+                      imageUrl: _imageUrlController.text.trim().isEmpty
+                          ? null
+                          : _imageUrlController.text.trim(),
+                      data: const {'type': 'general'},
+                    );
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notification sent to yourself'),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to send to self: $e')),
+                    );
+                  } finally {
+                    if (mounted)
+                      setState(() {
+                        _sending = false;
+                      });
+                  }
+                },
+                text: 'Send to Myself',
                 loading: _sending,
               ),
             ),
@@ -616,6 +714,30 @@ class _DebugToolsState extends State<_DebugTools> {
     );
   }
 
+  Future<void> _forceTrayTest() async {
+    try {
+      final int nid = DateTime.now().millisecondsSinceEpoch & 0x7fffffff;
+      await awesome.AwesomeNotifications().createNotification(
+        content: awesome.NotificationContent(
+          id: nid,
+          channelKey: 'order_updates',
+          title: 'Tray Test',
+          body:
+              'This should appear in system tray even when app is background/terminated',
+          notificationLayout: awesome.NotificationLayout.Default,
+          payload: {'type': 'test'},
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tray test sent! Check system tray.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Tray test failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -630,7 +752,11 @@ class _DebugToolsState extends State<_DebugTools> {
         children: [
           const Text(
             'Debug Tools',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -651,6 +777,11 @@ class _DebugToolsState extends State<_DebugTools> {
                 onPressed: _localTest,
                 label: 'Local Test',
                 color: Colors.green,
+              ),
+              _buildDebugButton(
+                onPressed: _forceTrayTest,
+                label: 'Force Tray Test',
+                color: Colors.orange,
               ),
             ],
           ),

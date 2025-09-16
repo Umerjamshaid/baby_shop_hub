@@ -85,20 +85,26 @@ class AppButton extends StatelessWidget {
         ),
         child: loading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
       ),
     );
   }

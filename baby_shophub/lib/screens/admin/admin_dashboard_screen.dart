@@ -10,7 +10,7 @@ import 'admin_products_screen.dart';
 import 'admin_orders_screen.dart';
 import 'admin_users_screen.dart';
 import 'categories_screen.dart';
-import 'product_form_screen.dart';
+import 'admin_edit_product_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -38,10 +38,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _loadDashboardStats();
   }
@@ -83,12 +83,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       body: _isLoading
           ? _buildLoadingWidget()
           : FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: _buildDashboard(),
-        ),
-      ),
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: _buildDashboard(),
+              ),
+            ),
     );
   }
 
@@ -105,10 +105,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Flexible(
             child: const Text(
               'Admin Dashboard',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -169,12 +166,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildDrawer() {
     final menuItems = [
-      {'icon': Icons.dashboard, 'title': 'Dashboard', 'color': const Color(0xFF6C5CE7)},
-      {'icon': Icons.inventory, 'title': 'Products', 'color': const Color(0xFF00B894)},
-      {'icon': Icons.category, 'title': 'Categories', 'color': const Color(0xFFE17055)},
-      {'icon': Icons.shopping_cart, 'title': 'Orders', 'color': const Color(0xFFFD79A8)},
-      {'icon': Icons.people, 'title': 'Users', 'color': const Color(0xFF74B9FF)},
-      {'icon': Icons.notifications, 'title': 'Notifications', 'color': const Color(0xFFFDCB6E)},
+      {
+        'icon': Icons.dashboard,
+        'title': 'Dashboard',
+        'color': const Color(0xFF6C5CE7),
+      },
+      {
+        'icon': Icons.inventory,
+        'title': 'Products',
+        'color': const Color(0xFF00B894),
+      },
+      {
+        'icon': Icons.add_box,
+        'title': 'Add Product',
+        'color': const Color(0xFF00B894),
+      },
+      {
+        'icon': Icons.category,
+        'title': 'Categories',
+        'color': const Color(0xFFE17055),
+      },
+      {
+        'icon': Icons.shopping_cart,
+        'title': 'Orders',
+        'color': const Color(0xFFFD79A8),
+      },
+      {
+        'icon': Icons.people,
+        'title': 'Users',
+        'color': const Color(0xFF74B9FF),
+      },
+      {
+        'icon': Icons.notifications,
+        'title': 'Notifications',
+        'color': const Color(0xFFFDCB6E),
+      },
     ];
 
     return Drawer(
@@ -183,48 +209,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF6C5CE7),
-              Color(0xFF74B9FF),
-            ],
+            colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
           ),
         ),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-              ),
+              decoration: const BoxDecoration(color: Colors.transparent),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.admin_panel_settings,
-                      size: 40,
+                      size: 32,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const Text(
                     'Admin Panel',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     'Dashboard Control Center',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -234,18 +257,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               final index = entry.key;
               final item = entry.value;
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                 child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   leading: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       item['icon'] as IconData,
                       color: Colors.white,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                   title: Text(
@@ -253,6 +280,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
+                      fontSize: 14,
                     ),
                   ),
                   shape: RoundedRectangleBorder(
@@ -312,27 +340,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           MaterialPageRoute(builder: (context) => const AdminProductsScreen()),
         );
         break;
-      case 2: // Categories
+      case 2: // Add Product
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminEditProductScreen(onProductSaved: () {}),
+          ),
+        );
+        break;
+      case 3: // Categories
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const CategoriesScreen()),
         );
         break;
-      case 3: // Orders
+      case 4: // Orders
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const AdminOrdersScreen()),
         );
         break;
-      case 4: // Users
+      case 5: // Users
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const AdminUsersScreen()),
         );
-        case 5: // Notifications
+        break;
+      case 6: // Notifications
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const NotificationManagementScreen()),
+          MaterialPageRoute(
+            builder: (context) => const NotificationManagementScreen(),
+          ),
         );
         break;
     }
@@ -358,7 +397,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildWelcomeSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -374,7 +413,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
             child: Column(
@@ -384,26 +423,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   'Welcome Back, Admin!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'Here\'s what\'s happening with your store today.',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.waving_hand,
-            color: Colors.white,
-            size: 40,
-          ),
+          const SizedBox(width: 12),
+          Icon(Icons.waving_hand, color: Colors.white, size: 32),
         ],
       ),
     );
@@ -433,28 +466,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         'title': 'Total Users',
         'value': (_stats['totalUsers']?.toString() ?? '0'),
         'icon': Icons.people_outline,
-        'gradient': const LinearGradient(colors: [Color(0xFF74B9FF), Color(0xFF0984E3)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF74B9FF), Color(0xFF0984E3)],
+        ),
         'change': '+12%',
       },
       {
         'title': 'Total Products',
         'value': (_stats['totalProducts']?.toString() ?? '0'),
         'icon': Icons.inventory_2_outlined,
-        'gradient': const LinearGradient(colors: [Color(0xFF00B894), Color(0xFF00CEC9)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF00B894), Color(0xFF00CEC9)],
+        ),
         'change': '+8%',
       },
       {
         'title': 'Total Orders',
         'value': (_stats['totalOrders']?.toString() ?? '0'),
         'icon': Icons.shopping_cart_outlined,
-        'gradient': const LinearGradient(colors: [Color(0xFFFD79A8), Color(0xFFE84393)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFFD79A8), Color(0xFFE84393)],
+        ),
         'change': '+23%',
       },
       {
         'title': 'Total Sales',
         'value': '\$${(_stats['totalSales']?.toStringAsFixed(2) ?? '0.00')}',
         'icon': Icons.trending_up,
-        'gradient': const LinearGradient(colors: [Color(0xFFFDCB6E), Color(0xFFE17055)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFFDCB6E), Color(0xFFE17055)],
+        ),
         'change': '+15%',
       },
     ];
@@ -462,9 +503,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.1,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.2,
       ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -477,14 +518,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (stat['gradient'] as LinearGradient).colors.first.withOpacity(0.3),
+                color: (stat['gradient'] as LinearGradient).colors.first
+                    .withOpacity(0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -498,7 +540,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       color: Colors.white,
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
@@ -519,7 +564,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   child: Text(
                     stat['value'] as String,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -567,7 +612,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AdminProductsScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const AdminProductsScreen(),
+                  ),
                 );
               },
               icon: const Icon(Icons.arrow_forward),
@@ -601,11 +648,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         child: const Center(
           child: Column(
             children: [
-              Icon(
-                Icons.trending_up,
-                size: 48,
-                color: Colors.grey,
-              ),
+              Icon(Icons.trending_up, size: 48, color: Colors.grey),
               SizedBox(height: 16),
               Text(
                 'No popular products yet',
@@ -649,7 +692,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: index < popularProducts.length - 1
-                  ? Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1)))
+                  ? Border(
+                      bottom: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                    )
                   : null,
             ),
             child: Row(
@@ -724,7 +769,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         'color': const Color(0xFF00B894),
         'onTap': () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const AdminProductsScreen()),
+          MaterialPageRoute(
+            builder: (context) => AdminEditProductScreen(onProductSaved: () {}),
+          ),
         ),
       },
       {
@@ -751,72 +798,76 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
         ),
         const SizedBox(height: 16),
-        ...actions.map((action) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: action['onTap'] as VoidCallback,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
+        ...actions
+            .map(
+              (action) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  onTap: action['onTap'] as VoidCallback,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: (action['color'] as Color).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      action['icon'] as IconData,
-                      color: action['color'] as Color,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          action['title'] as String,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: (action['color'] as Color).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            action['icon'] as IconData,
+                            color: action['color'] as Color,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          action['subtitle'] as String,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                action['title'] as String,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                action['subtitle'] as String,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey.shade400,
                         ),
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey.shade400,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        )).toList(),
+            )
+            .toList(),
       ],
     );
   }
@@ -828,7 +879,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 }

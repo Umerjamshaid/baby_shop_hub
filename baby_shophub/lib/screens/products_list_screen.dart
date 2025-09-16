@@ -48,10 +48,10 @@ class _ProductsListScreenState extends State<ProductsListScreen>
 
     _filters =
         widget.searchFilters ??
-            SearchFilters(
-              category: widget.category ?? 'All',
-              query: widget.searchQuery ?? '',
-            );
+        SearchFilters(
+          category: widget.category ?? 'All',
+          query: widget.searchQuery ?? '',
+        );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProducts();
@@ -84,13 +84,13 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     );
 
     // If we're coming from a category or search, apply the filter
-    if (widget.category != null) {
+    if (widget.category != null && widget.category != 'All') {
       productProvider.filterProductsByCategory(widget.category!);
     } else if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
       productProvider.searchProducts(widget.searchQuery!);
     } else {
-      // If no category or search query, show all products
-      productProvider.clearFilters();
+      // If no category or search query, or category is "All", show all products
+      productProvider.loadAllProducts();
     }
   }
 
@@ -256,9 +256,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
             final products = productProvider.filteredProducts;
 
             if (products.isEmpty) {
-              return _buildNoResultsState(
-                  widget.searchQuery ?? _filters.query
-              );
+              return _buildNoResultsState(widget.searchQuery ?? _filters.query);
             }
 
             return _isGridView
@@ -336,10 +334,10 @@ class _ProductsListScreenState extends State<ProductsListScreen>
   }
 
   PopupMenuItem<String> _buildSortOption(
-      String value,
-      IconData icon,
-      String text,
-      ) {
+    String value,
+    IconData icon,
+    String text,
+  ) {
     final isSelected = _currentSort == value;
     return PopupMenuItem(
       value: value,
@@ -450,8 +448,8 @@ class _ProductsListScreenState extends State<ProductsListScreen>
                     spacing: 12,
                     runSpacing: 12,
                     children: ['Diapers', 'Toys', 'Clothing', 'Food'].map((
-                        suggestion,
-                        ) {
+                      suggestion,
+                    ) {
                       return Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -879,21 +877,21 @@ class ProductListCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     child: product.firstImage.isNotEmpty
                         ? Image.network(
-                      product.firstImage,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.image_not_supported_rounded,
-                          size: 40,
-                          color: Colors.grey.shade400,
-                        );
-                      },
-                    )
+                            product.firstImage,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.image_not_supported_rounded,
+                                size: 40,
+                                color: Colors.grey.shade400,
+                              );
+                            },
+                          )
                         : Icon(
-                      Icons.image_not_supported_rounded,
-                      size: 40,
-                      color: Colors.grey.shade400,
-                    ),
+                            Icons.image_not_supported_rounded,
+                            size: 40,
+                            color: Colors.grey.shade400,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 16),

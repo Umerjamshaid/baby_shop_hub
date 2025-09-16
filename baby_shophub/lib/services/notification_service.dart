@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:awesome_notifications/awesome_notifications.dart' as awesome;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -258,52 +259,54 @@ class NotificationService {
   // Background handled by top-level function
 
   Future<void> _showNotification(RemoteMessage message) async {
-    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'order_updates',
-      'Order Updates',
-      channelDescription: 'Notifications for order status updates',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-
+    final String title = message.notification?.title ?? 'BabyShopHub';
+    final String body = message.notification?.body ?? 'New notification';
     final String? imageUrl =
         message.data['imageUrl'] ??
         message.notification?.android?.imageUrl ??
         message.notification?.apple?.imageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      try {
-        final String filePath = await _downloadToTemp(imageUrl);
-        final BigPictureStyleInformation styleInformation =
-            BigPictureStyleInformation(
-              FilePathAndroidBitmap(filePath),
-              contentTitle: message.notification?.title,
-              summaryText: message.notification?.body,
-            );
-        androidDetails = AndroidNotificationDetails(
-          'order_updates',
-          'Order Updates',
-          channelDescription: 'Notifications for order status updates',
-          importance: Importance.max,
-          priority: Priority.high,
-          styleInformation: styleInformation,
-        );
-      } catch (_) {}
+
+    try {
+      final int nid =
+          ((message.messageId?.hashCode ??
+              DateTime.now().millisecondsSinceEpoch) &
+          0x7fffffff);
+      await awesome.AwesomeNotifications().createNotification(
+        content: awesome.NotificationContent(
+          id: nid,
+          channelKey: 'order_updates',
+          title: title,
+          body: body,
+          notificationLayout: imageUrl != null && imageUrl.isNotEmpty
+              ? awesome.NotificationLayout.BigPicture
+              : awesome.NotificationLayout.Default,
+          bigPicture: imageUrl,
+          payload: {
+            'type': message.data['type']?.toString() ?? 'general',
+            'productId': message.data['productId']?.toString() ?? '',
+          },
+        ),
+      );
+    } catch (_) {
+      // Fallback to flutter_local_notifications
+      const android = AndroidNotificationDetails(
+        'order_updates',
+        'Order Updates',
+        channelDescription: 'Notifications for order status updates',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      const iOS = DarwinNotificationDetails();
+      await _flutterLocalNotificationsPlugin.show(
+        ((message.messageId?.hashCode ??
+                DateTime.now().millisecondsSinceEpoch) &
+            0x7fffffff),
+        title,
+        body,
+        const NotificationDetails(android: android, iOS: iOS),
+        payload: message.data['type'] ?? 'general',
+      );
     }
-
-    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails();
-
-    final NotificationDetails platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iOSDetails,
-    );
-
-    await _flutterLocalNotificationsPlugin.show(
-      message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
-      message.notification?.title ?? 'BabyShopHub',
-      message.notification?.body ?? 'New notification',
-      platformDetails,
-      payload: message.data['type'] ?? 'general',
-    );
   }
 
   Future<String> _downloadToTemp(String url) async {
@@ -338,6 +341,14 @@ class NotificationService {
     switch (type) {
       case 'order_update':
         navigator.pushNamed('/order-confirmation');
+        return;
+      case 'product':
+        final pid = data['productId']?.toString();
+        if (pid != null && pid.isNotEmpty) {
+          navigator.pushNamed('/product', arguments: {'id': pid});
+          return;
+        }
+        navigator.pushNamed('/home');
         return;
       case 'new_arrival':
       case 'offer':
@@ -386,30 +397,34 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'local_channel',
-          'Local Notifications',
-          channelDescription:
-              'This channel is used for local reminders (not from FCM).',
-          importance: Importance.high,
-          priority: Priority.high,
-        );
-
-    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails();
-
-    const NotificationDetails platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iOSDetails,
-    );
-
-    await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch,
-      title,
-      body,
-      platformDetails,
-      payload: payload,
-    );
+    try {
+      await awesome.AwesomeNotifications().createNotification(
+        content: awesome.NotificationContent(
+          id: DateTime.now().millisecondsSinceEpoch,
+          channelKey: 'local_channel',
+          title: title,
+          body: body,
+          payload: payload == null ? null : {'type': payload},
+        ),
+      );
+    } catch (_) {
+      const android = AndroidNotificationDetails(
+        'local_channel',
+        'Local Notifications',
+        channelDescription:
+            'This channel is used for local reminders (not from FCM).',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const iOS = DarwinNotificationDetails();
+      await _flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch,
+        title,
+        body,
+        const NotificationDetails(android: android, iOS: iOS),
+        payload: payload,
+      );
+    }
   }
 
   Future<void> initialize() async {

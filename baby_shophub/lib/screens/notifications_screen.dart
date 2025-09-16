@@ -26,7 +26,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _loadNotifications() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    final notificationProvider = Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    );
 
     if (authProvider.currentUser != null) {
       notificationProvider.loadNotifications(authProvider.currentUser!.id);
@@ -43,11 +46,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: const Text('Notifications'),
         actions: [
           if (authProvider.currentUser != null &&
-              notificationProvider.unreadCount(authProvider.currentUser!.id) > 0)
+              notificationProvider.unreadCount(authProvider.currentUser!.id) >
+                  0)
             IconButton(
               icon: const Icon(Icons.mark_email_read),
               onPressed: () {
-                notificationProvider.markAllAsRead(authProvider.currentUser!.id);
+                notificationProvider.markAllAsRead(
+                  authProvider.currentUser!.id,
+                );
               },
               tooltip: 'Mark all as read',
             ),
@@ -60,10 +66,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: _buildBody(notificationProvider, authProvider),
     );
-
   }
 
-  Widget _buildBody(NotificationProvider notificationProvider, AuthProvider authProvider) {
+  Widget _buildBody(
+    NotificationProvider notificationProvider,
+    AuthProvider authProvider,
+  ) {
     if (notificationProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -77,10 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 16),
             Text('Error: ${notificationProvider.error}'),
             const SizedBox(height: 16),
-            AppButton(
-              onPressed: _loadNotifications,
-              text: 'Try Again',
-            ),
+            AppButton(onPressed: _loadNotifications, text: 'Try Again'),
           ],
         ),
       );
@@ -126,7 +131,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             direction: DismissDirection.endToStart,
             onDismissed: (direction) {
               if (authProvider.currentUser != null) {
-                notificationProvider.markAsRead(notification.id, authProvider.currentUser!.id);
+                notificationProvider.markAsRead(
+                  notification.id,
+                  authProvider.currentUser!.id,
+                );
               }
             },
             child: Card(
@@ -159,7 +167,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     : null,
                 onTap: () {
                   if (authProvider.currentUser != null && !isRead) {
-                    notificationProvider.markAsRead(notification.id, authProvider.currentUser!.id);
+                    notificationProvider.markAsRead(
+                      notification.id,
+                      authProvider.currentUser!.id,
+                    );
                   }
 
                   // Handle notification tap (navigate to relevant screen)
@@ -181,13 +192,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       switch (type) {
         case 'order':
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => OrderDetailScreen(orderId: id)));
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => OrderDetailScreen(orderId: id)));
           break;
         case 'product':
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(productId: id)));
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(productId: id)));
           break;
         case 'promotion':
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => PromotionsScreen()));
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => PromotionsScreen()));
           break;
       }
     }
