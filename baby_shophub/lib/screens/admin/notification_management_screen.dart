@@ -5,6 +5,8 @@ import 'package:awesome_notifications/awesome_notifications.dart' as awesome;
 
 import '../../services/user_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/product_service.dart';
+import '../../models/product_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/common/app_button.dart';
 import 'package:provider/provider.dart';
@@ -22,12 +24,15 @@ class _NotificationManagementScreenState
     extends State<NotificationManagementScreen> {
   final UserService _userService = UserService();
   final NotificationService _notificationService = NotificationService();
+  final ProductService _productService = ProductService();
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _dataController = TextEditingController();
+  final TextEditingController _productSearchController =
+      TextEditingController();
 
   List<UserModel> _allUsers = [];
   List<UserModel> _filteredUsers = [];
@@ -36,12 +41,17 @@ class _NotificationManagementScreenState
   bool _sendToAll = false;
   bool _isLoading = false;
   bool _sending = false;
+  String _selectedType = 'general'; // general, product, order, promotion
+  List<Product> _allProducts = [];
+  List<Product> _filteredProducts = [];
+  Product? _selectedProduct;
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
     _searchController.addListener(_filterUsers);
+    _loadProducts();
   }
 
   Future<void> _loadUsers() async {
@@ -63,6 +73,18 @@ class _NotificationManagementScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to load users: $e')));
+    }
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await _productService.getAllProducts();
+      setState(() {
+        _allProducts = products;
+        _filteredProducts = products;
+      });
+    } catch (e) {
+      // ignore silently; product sending still works via manual JSON
     }
   }
 
@@ -127,17 +149,23 @@ class _NotificationManagementScreenState
     });
 
     try {
-      // Parse optional JSON payload
+      // Build payload automatically from UI selections
       Map<String, dynamic>? extraData;
-      if (_dataController.text.trim().isNotEmpty) {
+      if (_selectedType == 'product' && _selectedProduct != null) {
+        extraData = {'type': 'product', 'productId': _selectedProduct!.id};
+        if (_imageUrlController.text.trim().isEmpty) {
+          _imageUrlController.text = _selectedProduct!.firstImage;
+        }
+      } else if (_dataController.text.trim().isNotEmpty) {
+        // Fallback: advanced JSON if provided
         try {
           final parsed = jsonDecode(_dataController.text.trim());
           if (parsed is Map<String, dynamic>) {
             extraData = parsed;
           }
-        } catch (_) {
-          // Invalid JSON, ignore
-        }
+        } catch (_) {}
+      } else {
+        extraData = {'type': _selectedType};
       }
 
       final List<String> targetUserIds = _sendToAll
@@ -167,6 +195,8 @@ class _NotificationManagementScreenState
         _selectedUserIds.clear();
         _selectAll = false;
         _sendToAll = false;
+        _selectedType = 'general';
+        _selectedProduct = null;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -316,6 +346,28 @@ class _NotificationManagementScreenState
               maxLines: 2,
             ),
             const SizedBox(height: 10),
+            // Type selector
+            DropdownButtonFormField<String>(
+              value: _selectedType,
+              decoration: InputDecoration(
+                labelText: 'Notification Type',
+                prefixIcon: const Icon(Icons.category, size: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                isDense: true,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'general', child: Text('General')),
+                DropdownMenuItem(value: 'product', child: Text('Product')),
+                DropdownMenuItem(value: 'promotion', child: Text('Promotion')),
+                DropdownMenuItem(value: 'order', child: Text('Order')),
+              ],
+              onChanged: (v) => setState(() => _selectedType = v ?? 'general'),
+            ),
+            const SizedBox(height: 10),
+            if (_selectedType == 'product') _buildProductPicker(),
+            if (_selectedType == 'product') const SizedBox(height: 10),
             _buildCompactTextField(
               controller: _imageUrlController,
               label: 'Image URL (optional)',
@@ -339,12 +391,24 @@ class _NotificationManagementScreenState
                 ),
               ),
             const SizedBox(height: 10),
-            _buildCompactTextField(
-              controller: _dataController,
-              label: 'Payload (JSON)',
-              icon: Icons.data_object,
-              hintText: '{"type":"offer","id":"123"}',
-              maxLines: 2,
+            // Advanced JSON (optional)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              title: const Text(
+                'Advanced Payload (optional)',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              children: [
+                const SizedBox(height: 8),
+                _buildCompactTextField(
+                  controller: _dataController,
+                  label: 'Payload (JSON)',
+                  icon: Icons.data_object,
+                  hintText: '{"type":"offer","id":"123"}',
+                  maxLines: 2,
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Container(
@@ -554,6 +618,251 @@ class _NotificationManagementScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProductPicker() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select Product',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: TextField(
+                      controller: _productSearchController,
+                      onChanged: (q) {
+                        final query = q.toLowerCase();
+                        setState(() {
+                          _filteredProducts = _allProducts.where((p) {
+                            return p.name.toLowerCase().contains(query);
+                          }).toList();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search product by name',
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
+                      ),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    onPressed: _allProducts.isEmpty
+                        ? null
+                        : () async {
+                            final selected = await showDialog<Product>(
+                              context: context,
+                              builder: (context) {
+                                return Dialog(
+                                  insetPadding: const EdgeInsets.all(16),
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 420,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          child: const Text(
+                                            'Pick a Product',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        const Divider(height: 1),
+                                        Expanded(
+                                          child: ListView.builder(
+                                            itemCount: _filteredProducts.length,
+                                            itemBuilder: (context, index) {
+                                              final p =
+                                                  _filteredProducts[index];
+                                              return ListTile(
+                                                leading: SizedBox(
+                                                  width: 40,
+                                                  height: 40,
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                    child:
+                                                        p.firstImage.startsWith(
+                                                          'http',
+                                                        )
+                                                        ? Image.network(
+                                                            p.firstImage,
+                                                            width: 40,
+                                                            height: 40,
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder:
+                                                                (
+                                                                  _,
+                                                                  __,
+                                                                  ___,
+                                                                ) => Container(
+                                                                  color: Colors
+                                                                      .grey[200],
+                                                                  child: const Icon(
+                                                                    Icons.image,
+                                                                    size: 18,
+                                                                  ),
+                                                                ),
+                                                          )
+                                                        : Container(
+                                                            color: Colors
+                                                                .grey[200],
+                                                            child: const Icon(
+                                                              Icons.image,
+                                                              size: 18,
+                                                            ),
+                                                          ),
+                                                  ),
+                                                ),
+                                                title: Text(
+                                                  p.name,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                subtitle: Text(
+                                                  p.formattedPrice,
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                onTap: () =>
+                                                    Navigator.pop(context, p),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                            if (selected != null) {
+                              setState(() {
+                                _selectedProduct = selected;
+                                if (_imageUrlController.text.trim().isEmpty) {
+                                  _imageUrlController.text =
+                                      selected.firstImage;
+                                }
+                              });
+                            }
+                          },
+                    icon: const Icon(Icons.add_shopping_cart, size: 18),
+                    label: const Text('Pick'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_selectedProduct != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: (_selectedProduct!.firstImage.startsWith('http')
+                          ? Image.network(
+                              _selectedProduct!.firstImage,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 56,
+                                height: 56,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image, size: 20),
+                              ),
+                            )
+                          : Container(
+                              width: 56,
+                              height: 56,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.image, size: 20),
+                            )),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedProduct!.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedProduct!.formattedPrice,
+                            style: TextStyle(
+                              color: Colors.green[700],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _selectedProduct = null),
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

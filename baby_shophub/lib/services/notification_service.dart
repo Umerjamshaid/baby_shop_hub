@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+// Removed unused imports
 import 'package:awesome_notifications/awesome_notifications.dart' as awesome;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/notification_model.dart';
 import '../utils/constants.dart';
 import 'navigation_service.dart';
+import 'favorites_service.dart';
 
 // Top-level background handler required by Firebase Messaging
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -89,6 +88,38 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     await androidPlugin?.createNotificationChannel(channel);
+    // Listen to Awesome Notifications action buttons
+    try {
+      await awesome.AwesomeNotifications().setListeners(
+        onActionReceivedMethod: (received) async {
+          final String action = received.buttonKeyPressed;
+          final Map<String, String?> payload = received.payload ?? {};
+          final String type = payload['type'] ?? 'general';
+          if (type == 'product') {
+            final String? productId = payload['productId'];
+            if (action == 'VIEW' && productId != null && productId.isNotEmpty) {
+              NavigationService.navigatorKey.currentState?.pushNamed(
+                '/product',
+                arguments: {'id': productId},
+              );
+            }
+            if (action == 'SAVE' && productId != null && productId.isNotEmpty) {
+              try {
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null) {
+                  await FavoritesService().addToFavorites(uid, productId);
+                  await showLocalNotification(
+                    title: 'Saved',
+                    body: 'Product added to favorites',
+                    payload: 'general',
+                  );
+                }
+              } catch (_) {}
+            }
+          }
+        },
+      );
+    } catch (_) {}
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('🔔 onMessage: ${message.messageId}, data=${message.data}');
       _showNotification(message);
@@ -271,6 +302,8 @@ class NotificationService {
           ((message.messageId?.hashCode ??
               DateTime.now().millisecondsSinceEpoch) &
           0x7fffffff);
+      final String type = message.data['type']?.toString() ?? 'general';
+      final String productId = message.data['productId']?.toString() ?? '';
       await awesome.AwesomeNotifications().createNotification(
         content: awesome.NotificationContent(
           id: nid,
@@ -281,11 +314,22 @@ class NotificationService {
               ? awesome.NotificationLayout.BigPicture
               : awesome.NotificationLayout.Default,
           bigPicture: imageUrl,
-          payload: {
-            'type': message.data['type']?.toString() ?? 'general',
-            'productId': message.data['productId']?.toString() ?? '',
-          },
+          payload: {'type': type, 'productId': productId},
         ),
+        actionButtons: (type == 'product' && productId.isNotEmpty)
+            ? [
+                awesome.NotificationActionButton(
+                  key: 'VIEW',
+                  label: 'View',
+                  actionType: awesome.ActionType.Default,
+                ),
+                awesome.NotificationActionButton(
+                  key: 'SAVE',
+                  label: 'Save',
+                  actionType: awesome.ActionType.Default,
+                ),
+              ]
+            : null,
       );
     } catch (_) {
       // Fallback to flutter_local_notifications
@@ -297,10 +341,12 @@ class NotificationService {
         priority: Priority.high,
       );
       const iOS = DarwinNotificationDetails();
+      final int safeId =
+          ((message.messageId?.hashCode ??
+              DateTime.now().millisecondsSinceEpoch) &
+          0x7fffffff);
       await _flutterLocalNotificationsPlugin.show(
-        ((message.messageId?.hashCode ??
-                DateTime.now().millisecondsSinceEpoch) &
-            0x7fffffff),
+        safeId,
         title,
         body,
         const NotificationDetails(android: android, iOS: iOS),
@@ -309,18 +355,7 @@ class NotificationService {
     }
   }
 
-  Future<String> _downloadToTemp(String url) async {
-    final HttpClient client = HttpClient();
-    final HttpClientRequest request = await client.getUrl(Uri.parse(url));
-    final HttpClientResponse response = await request.close();
-    final Uint8List bytes = await consolidateHttpClientResponseBytes(response);
-    final Directory dir = await getTemporaryDirectory();
-    final String filePath =
-        '${dir.path}/n_${DateTime.now().millisecondsSinceEpoch}.img';
-    final File file = File(filePath);
-    await file.writeAsBytes(bytes);
-    return filePath;
-  }
+  // Removed unused temporary download helper
 
   void _handleMessage(RemoteMessage message) {
     final String type = message.data['type'] ?? 'general';

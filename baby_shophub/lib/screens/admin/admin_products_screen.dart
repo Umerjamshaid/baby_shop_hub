@@ -466,20 +466,41 @@ class _AdminProductsScreenState extends State<AdminProductsScreen>
           // Product Image
           Expanded(
             flex: 3,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                image: DecorationImage(
-                  image: NetworkImage(product.firstImage),
-                  fit: BoxFit.cover,
-                ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // Stock indicator
+                  if (product.firstImage.isNotEmpty &&
+                      (product.firstImage.startsWith('http://') ||
+                          product.firstImage.startsWith('https://')))
+                    Image.network(
+                      product.firstImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.grey[500],
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    Container(
+                      color: Colors.grey[200],
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 36,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  // Overlays
                   Positioned(
                     top: 8,
                     left: 8,
@@ -502,7 +523,6 @@ class _AdminProductsScreenState extends State<AdminProductsScreen>
                       ),
                     ),
                   ),
-                  // Featured badge
                   if (product.isFeatured)
                     Positioned(
                       top: 8,
@@ -537,6 +557,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen>
               padding: const EdgeInsets.all(4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     product.name,
@@ -557,7 +578,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen>
                       color: Colors.green[700],
                     ),
                   ),
-                  const Spacer(),
+                  // Use minimal spacing to avoid overflow instead of Spacer
                   Row(
                     children: [
                       Icon(Icons.category, size: 8, color: Colors.grey[600]),

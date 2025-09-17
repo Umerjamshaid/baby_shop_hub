@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,7 +11,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -22,7 +24,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _rotateAnimation;
+  late Animation<double>
+  _rotateAnimation; // used by rotating particle and loading indicator
   late Animation<double> _pulseAnimation;
   late Animation<double> _progressAnimation;
   late Animation<double> _shimmerAnimation;
@@ -72,18 +75,19 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+        );
 
     _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    _rotateAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _rotateController, curve: Curves.linear),
-    );
+    _rotateAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _rotateController, curve: Curves.linear));
 
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -128,6 +132,18 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Future<void> _checkAuthStatus() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     bool isLoggedIn = await authProvider.checkLoginStatus();
+    // Start live notifications stream so the badge updates without re-open
+    if (isLoggedIn && authProvider.currentUser != null) {
+      try {
+        final notificationProvider = Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        );
+        notificationProvider.initializeNotifications(
+          authProvider.currentUser!.id,
+        );
+      } catch (_) {}
+    }
 
     // Add a small delay to show the splash screen
     await Future.delayed(const Duration(seconds: 2));
@@ -159,11 +175,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF6B73FF),
-              Color(0xFF9575CD),
-              Color(0xFFFF6B9D),
-            ],
+            colors: [Color(0xFF6B73FF), Color(0xFF9575CD), Color(0xFFFF6B9D)],
             stops: [0.0, 0.5, 1.0],
           ),
         ),
@@ -193,10 +205,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white,
-                                  Color(0xFFF0F0F0),
-                                ],
+                                colors: [Colors.white, Color(0xFFF0F0F0)],
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -211,7 +220,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                 ),
                                 // Add glow effect
                                 BoxShadow(
-                                  color: const Color(0xFF6B73FF).withOpacity(0.3),
+                                  color: const Color(
+                                    0xFF6B73FF,
+                                  ).withOpacity(0.3),
                                   blurRadius: 30,
                                   spreadRadius: 5,
                                 ),
@@ -246,8 +257,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                 Colors.white70,
                               ],
                               stops: const [0.0, 0.5, 1.0],
-                              begin: Alignment(-1.0 + _shimmerAnimation.value, 0.0),
-                              end: Alignment(1.0 + _shimmerAnimation.value, 0.0),
+                              begin: Alignment(
+                                -1.0 + _shimmerAnimation.value,
+                                0.0,
+                              ),
+                              end: Alignment(
+                                1.0 + _shimmerAnimation.value,
+                                0.0,
+                              ),
                             ).createShader(bounds),
                             child: const Text(
                               'BabyShopHub',
@@ -277,7 +294,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: Colors.white.withOpacity(0.1),
@@ -331,10 +351,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                         height: 6,
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(3),
+                                          borderRadius: BorderRadius.circular(
+                                            3,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.white.withOpacity(0.5),
+                                              color: Colors.white.withOpacity(
+                                                0.5,
+                                              ),
                                               blurRadius: 8,
                                             ),
                                           ],
@@ -349,7 +373,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                         width: 6,
                                         decoration: BoxDecoration(
                                           color: Colors.white.withOpacity(0.7),
-                                          borderRadius: BorderRadius.circular(3),
+                                          borderRadius: BorderRadius.circular(
+                                            3,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -410,11 +436,17 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               'Initializing...',
                               'Loading products...',
                               'Setting up...',
-                              'Almost ready!'
+                              'Almost ready!',
                             ];
-                            final index = (_progressAnimation.value * (loadingTexts.length - 1)).floor();
+                            final index =
+                                (_progressAnimation.value *
+                                        (loadingTexts.length - 1))
+                                    .floor();
                             return Text(
-                              loadingTexts[index.clamp(0, loadingTexts.length - 1)],
+                              loadingTexts[index.clamp(
+                                0,
+                                loadingTexts.length - 1,
+                              )],
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withOpacity(0.8),
@@ -443,7 +475,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 opacity: _fadeAnimation,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: Colors.white.withOpacity(0.1),
@@ -752,7 +787,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             animation: _shimmerController,
             builder: (context, child) {
               return Opacity(
-                opacity: (0.5 + 0.3 * _shimmerAnimation.value.abs()).clamp(0.0, 1.0),
+                opacity: (0.5 + 0.3 * _shimmerAnimation.value.abs()).clamp(
+                  0.0,
+                  1.0,
+                ),
                 child: Icon(
                   Icons.star,
                   size: 12,

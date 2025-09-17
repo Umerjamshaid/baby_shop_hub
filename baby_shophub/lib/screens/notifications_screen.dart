@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import '../models/notification_model.dart';
 import '../providers/notification_provider.dart';
@@ -125,58 +124,67 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ? notification.isReadBy(authProvider.currentUser!.id)
               : false;
 
-          return Dismissible(
-            key: Key(notification.id),
-            background: Container(color: Colors.red),
-            direction: DismissDirection.endToStart,
-            onDismissed: (direction) {
-              if (authProvider.currentUser != null) {
-                notificationProvider.markAsRead(
-                  notification.id,
-                  authProvider.currentUser!.id,
-                );
-              }
-            },
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: isRead ? Colors.white : Colors.blue[50],
-              child: ListTile(
-                leading: Icon(
-                  Icons.notifications,
-                  color: isRead ? Colors.grey : Colors.blue,
-                ),
-                title: Text(
-                  notification.title,
-                  style: TextStyle(
-                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(notification.message),
-                    const SizedBox(height: 4),
-                    Text(
-                      notification.formattedDate,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                trailing: !isRead
-                    ? const Icon(Icons.circle, size: 12, color: Colors.blue)
-                    : null,
-                onTap: () {
-                  if (authProvider.currentUser != null && !isRead) {
-                    notificationProvider.markAsRead(
-                      notification.id,
-                      authProvider.currentUser!.id,
-                    );
-                  }
-
-                  // Handle notification tap (navigate to relevant screen)
-                  _handleNotificationTap(notification);
-                },
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            color: isRead ? Colors.white : Colors.blue[50],
+            child: ListTile(
+              leading: Icon(
+                Icons.notifications,
+                color: isRead ? Colors.grey : Colors.blue,
               ),
+              title: Text(
+                notification.title,
+                style: TextStyle(
+                  fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (notification.imageUrl != null &&
+                      notification.imageUrl!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          notification.imageUrl!,
+                          height: 140,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                height: 140,
+                                color: Colors.grey[200],
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                  Text(notification.message),
+                  const SizedBox(height: 4),
+                  Text(
+                    notification.formattedDate,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              trailing: !isRead
+                  ? const Icon(Icons.circle, size: 12, color: Colors.blue)
+                  : null,
+              onTap: () {
+                if (authProvider.currentUser != null && !isRead) {
+                  notificationProvider.markAsRead(
+                    notification.id,
+                    authProvider.currentUser!.id,
+                  );
+                }
+                _handleNotificationTap(notification);
+              },
             ),
           );
         },
@@ -188,18 +196,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     // Handle different types of notifications
     if (notification.data != null) {
       final type = notification.data!['type'];
-      final id = notification.data!['id'];
+      final id = notification.data!['productId'] ?? notification.data!['id'];
 
       switch (type) {
         case 'order':
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => OrderDetailScreen(orderId: id)));
+          // TODO: Implement order detail screen navigation if available
           break;
         case 'product':
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(productId: id)));
+          if (id != null && id is String && id.isNotEmpty) {
+            Navigator.pushNamed(context, '/product', arguments: {'id': id});
+          }
           break;
         case 'promotion':
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => PromotionsScreen()));
+          // TODO: Implement promotions screen if available
           break;
+        default:
+          // Fallback to home
+          Navigator.pushNamed(context, '/home');
       }
     }
   }

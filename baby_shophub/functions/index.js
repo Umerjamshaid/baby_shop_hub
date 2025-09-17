@@ -51,7 +51,7 @@ exports.onNotificationCreated = functions.firestore
         notification: {
           title,
           body,
-          ...(imageUrl ? { imageUrl } : {}),
+          ...(imageUrl ? { image: imageUrl } : {}),
         },
         data: {
           type: payloadData.type || 'general',
@@ -106,6 +106,16 @@ exports.onNotificationCreated = functions.firestore
         console.log(`Pruned invalid tokens: ${invalidTokens.length}`);
       }
 
+      // Write back basic send stats
+      try {
+        await snap.ref.update({
+          successCount: response.successCount,
+          failureCount: response.failureCount,
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        console.warn('Could not write back send stats:', e);
+      }
       return null;
     } catch (err) {
       console.error('Error sending FCM:', err);
