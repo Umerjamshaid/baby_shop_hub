@@ -68,31 +68,32 @@ class _NotificationSettingsScreenState
         final settings = await _settingsService.getUserSettings(user.id);
 
         setState(() {
-          _pushNotifications = settings.pushNotifications;
-          _orderUpdates = settings.orderUpdates;
-          _newArrivals = settings.newArrivals;
-          _promotions = settings.promotions;
-          _cartReminders = settings.cartReminders;
-          _deliveryUpdates = settings.deliveryUpdates;
-          _securityAlerts = settings.securityAlerts;
+          _pushNotifications = settings['pushNotifications'] ?? true;
+          _orderUpdates = settings['orderUpdates'] ?? true;
+          _newArrivals = settings['newArrivals'] ?? true;
+          _promotions = settings['promotions'] ?? true;
+          _cartReminders = settings['cartReminders'] ?? true;
+          _deliveryUpdates = settings['deliveryUpdates'] ?? true;
+          _securityAlerts = settings['securityAlerts'] ?? true;
 
-          _emailOrderUpdates = settings.emailOrderUpdates;
-          _emailPromotions = settings.emailPromotions;
-          _emailNewsletters = settings.emailNewsletters;
-          _emailWeeklyDigest = settings.emailWeeklyDigest;
+          _emailOrderUpdates = settings['emailOrderUpdates'] ?? true;
+          _emailPromotions = settings['emailPromotions'] ?? false;
+          _emailNewsletters = settings['emailNewsletters'] ?? false;
+          _emailWeeklyDigest = settings['emailWeeklyDigest'] ?? true;
 
-          _smsOrderUpdates = settings.smsOrderUpdates;
-          _smsDeliveryUpdates = settings.smsDeliveryUpdates;
-          _smsSecurityAlerts = settings.smsSecurityAlerts;
+          _smsOrderUpdates = settings['smsOrderUpdates'] ?? true;
+          _smsDeliveryUpdates = settings['smsDeliveryUpdates'] ?? true;
+          _smsSecurityAlerts = settings['smsSecurityAlerts'] ?? true;
 
-          _marketingEmails = settings.marketingEmails;
-          _marketingSms = settings.marketingSms;
-          _marketingPush = settings.marketingPush;
-          _personalizedOffers = settings.personalizedOffers;
+          _marketingEmails = settings['marketingEmails'] ?? false;
+          _marketingSms = settings['marketingSms'] ?? false;
+          _marketingPush = settings['marketingPush'] ?? false;
+          _personalizedOffers = settings['personalizedOffers'] ?? true;
 
-          _notificationSound = settings.notificationSound;
-          _notificationVibration = settings.notificationVibration;
-          _notificationSoundType = settings.notificationSoundType;
+          _notificationSound = settings['notificationSound'] ?? true;
+          _notificationVibration = settings['notificationVibration'] ?? true;
+          _notificationSoundType =
+              settings['notificationSoundType'] ?? 'Default';
 
           _isLoading = false;
         });

@@ -846,9 +846,8 @@ Get it now on BabyShopHub! 🛍️
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ReviewsAnalyticsScreen(
-                                  product: widget.product,
-                                ),
+                                builder: (context) =>
+                                    const ReviewsAnalyticsScreen(),
                               ),
                             );
                           },
