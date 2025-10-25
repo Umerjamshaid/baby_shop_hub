@@ -5,21 +5,21 @@ class NotificationModel {
   final String id;
   final String title;
   final String message;
-  final List<String> userIds;
-  final String? imageUrl;
+  final String type;
   final Map<String, dynamic>? data;
   final DateTime sentAt;
   final List<String> readBy;
+  final String? imageUrl;
 
   NotificationModel({
     required this.id,
     required this.title,
     required this.message,
-    required this.userIds,
-    this.imageUrl,
+    required this.type,
     this.data,
     required this.sentAt,
     this.readBy = const [],
+    this.imageUrl,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,63 +27,42 @@ class NotificationModel {
       'id': id,
       'title': title,
       'message': message,
-      'userIds': userIds,
-      'imageUrl': imageUrl,
+      'type': type,
       'data': data,
       'sentAt': sentAt.toIso8601String(),
       'readBy': readBy,
+      'imageUrl': imageUrl,
     };
   }
 
   factory NotificationModel.fromMap(Map<String, dynamic> map) {
-    // Robust parsing of sentAt (supports Timestamp, ISO string, int)
-    DateTime parsedSentAt;
-    final raw = map['sentAt'];
+    // Robust parsing of timestamp (supports Timestamp, ISO string, int)
+    DateTime parsedTimestamp;
+    final raw = map['timestamp'];
 
     if (raw == null) {
-      parsedSentAt = DateTime.now();
+      parsedTimestamp = DateTime.now();
     } else if (raw is Timestamp) {
-      parsedSentAt = raw.toDate();
+      parsedTimestamp = raw.toDate();
     } else if (raw is String) {
-      parsedSentAt = DateTime.tryParse(raw) ?? DateTime.now();
+      parsedTimestamp = DateTime.tryParse(raw) ?? DateTime.now();
     } else if (raw is int) {
-      parsedSentAt = DateTime.fromMillisecondsSinceEpoch(raw);
+      parsedTimestamp = DateTime.fromMillisecondsSinceEpoch(raw);
     } else {
-      parsedSentAt = DateTime.now();
+      parsedTimestamp = DateTime.now();
     }
 
     return NotificationModel(
       id: map['id'] ?? '',
       title: map['title'] ?? '',
       message: map['message'] ?? '',
-      userIds: List<String>.from(map['userIds'] ?? []),
-      imageUrl: map['imageUrl'],
+      type: map['type'] ?? '',
       data: map['data'] != null ? Map<String, dynamic>.from(map['data']) : null,
-      sentAt: parsedSentAt,
+      sentAt: parsedTimestamp,
       readBy: List<String>.from(map['readBy'] ?? []),
+      imageUrl: map['imageUrl'],
     );
   }
-
-  // --- Convenience helpers ---
-
-  /// Returns true if *any* user has read this notification.
-  /// (Useful if UI expects a simple `isRead` boolean.)
-  bool  isReadBy(String userId) {
-    return readBy.contains(userId);
-  }
-
-
-  /// Returns true if *no* users have read this notification.
-  bool isUnreadBy(String userId) {
-    return !readBy.contains(userId);
-  }
-  // geter for userIds
-  List<String> get targetUserIds => userIds;
-
-
-
-  /// Returns true if the specific user has read the notification.
-  bool isReadByUser(String userId) => readBy.contains(userId);
 
   // Formatted relative date / friendly string
   String get formattedDate {
@@ -101,5 +80,10 @@ class NotificationModel {
     } else {
       return DateFormat('MMM d, y').format(sentAt);
     }
+  }
+
+  // Check if read by user
+  bool isReadBy(String userId) {
+    return readBy.contains(userId);
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -131,7 +132,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuthStatus() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    bool isLoggedIn = await authProvider.checkLoginStatus();
+    bool isLoggedIn = false;
+    try {
+      isLoggedIn = await authProvider
+          .checkLoginStatus()
+          .timeout(const Duration(seconds: 5), onTimeout: () => false);
+    } catch (_) {
+      isLoggedIn = false;
+    }
     // Start live notifications stream so the badge updates without re-open
     if (isLoggedIn && authProvider.currentUser != null) {
       try {
@@ -330,7 +338,7 @@ class _SplashScreenState extends State<SplashScreen>
                           animation: _rotateController,
                           builder: (context, child) {
                             return Transform.rotate(
-                              angle: _rotateController.value * 2.0 * 3.14159,
+                              angle: _rotateController.value * 2.0 * math.pi,
                               child: Container(
                                 width: 50,
                                 height: 50,
@@ -680,7 +688,7 @@ class _SplashScreenState extends State<SplashScreen>
             animation: _rotateController,
             builder: (context, child) {
               return Transform.rotate(
-                angle: _rotateController.value * 2.0 * 3.14159,
+                angle: _rotateController.value * 2.0 * math.pi,
                 child: Container(
                   width: 6,
                   height: 6,

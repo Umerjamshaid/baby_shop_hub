@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
 import '../utils/constants.dart';
@@ -23,12 +24,12 @@ class AuthService {
     String role = 'user',
   }) async {
     try {
-      print('Starting sign up process for: $email');
+      debugPrint('Starting sign up process for: $email');
 
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      print('User created successfully: ${userCredential.user?.uid}');
+      debugPrint('User created successfully: ${userCredential.user?.uid}');
 
       if (userCredential.user != null) {
         UserModel newUser = UserModel(
@@ -41,7 +42,7 @@ class AuthService {
           favoriteProducts: [],
         );
 
-        print('Saving user to Firestore: ${newUser.toMap()}');
+        debugPrint('Saving user to Firestore: ${newUser.toMap()}');
 
         // Save user to Firestore
         await _firestore
@@ -49,13 +50,13 @@ class AuthService {
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
 
-        print('User saved to Firestore successfully');
+        debugPrint('User saved to Firestore successfully');
         return newUser;
       }
-      print('User creation failed - user is null');
+      debugPrint('User creation failed - user is null');
       return null;
     } catch (e) {
-      print('Error during sign up: $e');
+      debugPrint('Error during sign up: $e');
       // Handle specific errors
       if (e is FirebaseAuthException) {
         throw FirebaseAuthException(code: e.code, message: e.message);
@@ -67,7 +68,7 @@ class AuthService {
   // Sign in with email and password
   Future<UserModel?> signInWithEmail(String email, String password) async {
     try {
-      print('Signing in: $email');
+      debugPrint('Signing in: $email');
 
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -75,13 +76,13 @@ class AuthService {
       );
 
       if (userCredential.user != null) {
-        print('User signed in, fetching data from Firestore');
+        debugPrint('User signed in, fetching data from Firestore');
         // Get user data from Firestore
         return await _getUserData(userCredential.user!.uid);
       }
       return null;
     } catch (e) {
-      print('Error during sign in: $e');
+      debugPrint('Error during sign in: $e');
       // Handle specific errors
       if (e is FirebaseAuthException) {
         throw FirebaseAuthException(code: e.code, message: e.message);
@@ -93,7 +94,7 @@ class AuthService {
   // Helper method to get user data
   Future<UserModel?> _getUserData(String userId) async {
     try {
-      print('Fetching user data for: $userId');
+      debugPrint('Fetching user data for: $userId');
 
       DocumentSnapshot userDoc = await _firestore
           .collection(AppConstants.usersCollection)
@@ -101,17 +102,17 @@ class AuthService {
           .get();
 
       if (userDoc.exists) {
-        print('User document found: ${userDoc.data()}');
+        debugPrint('User document found');
         final data = userDoc.data();
         if (data is Map<String, dynamic>) {
           return UserModel.fromMap(data);
         }
         throw Exception('Invalid user data format');
       }
-      print('User document does not exist in Firestore');
+      debugPrint('User document does not exist in Firestore');
       return null;
     } catch (e) {
-      print('Error fetching user data: $e');
+      debugPrint('Error fetching user data: $e');
       throw Exception('Failed to fetch user data: $e');
     }
   }
@@ -120,9 +121,9 @@ class AuthService {
   Future<void> signOut() async {
     try {
       await _auth.signOut();
-      print('User signed out successfully');
+      debugPrint('User signed out successfully');
     } catch (e) {
-      print('Error during sign out: $e');
+      debugPrint('Error during sign out: $e');
       throw Exception('Failed to sign out: $e');
     }
   }
@@ -131,9 +132,9 @@ class AuthService {
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      print('Password reset email sent to: $email');
+      debugPrint('Password reset email sent to: $email');
     } catch (e) {
-      print('Error sending reset email: $e');
+      debugPrint('Error sending reset email: $e');
       if (e is FirebaseAuthException) {
         throw FirebaseAuthException(code: e.code, message: e.message);
       }
@@ -145,13 +146,13 @@ class AuthService {
   Future<UserModel?> getCurrentUserData() async {
     try {
       if (_auth.currentUser != null) {
-        print('Getting current user data: ${_auth.currentUser!.uid}');
+        debugPrint('Getting current user data: ${_auth.currentUser!.uid}');
         return await _getUserData(_auth.currentUser!.uid);
       }
-      print('No current user found');
+      debugPrint('No current user found');
       return null;
     } catch (e) {
-      print('Error getting current user data: $e');
+      debugPrint('Error getting current user data: $e');
       throw Exception('Failed to get current user data: $e');
     }
   }
@@ -159,15 +160,15 @@ class AuthService {
   // Update user profile
   Future<void> updateUserProfile(UserModel user) async {
     try {
-      print('Updating user profile: ${user.id}');
+      debugPrint('Updating user profile: ${user.id}');
       final data = user.toMap();
       await _firestore
           .collection(AppConstants.usersCollection)
           .doc(user.id)
           .update(data);
-      print('User profile updated successfully');
+      debugPrint('User profile updated successfully');
     } catch (e) {
-      print('Error updating profile: $e');
+      debugPrint('Error updating profile: $e');
       throw Exception('Failed to update profile: $e');
     }
   }
@@ -176,10 +177,10 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     try {
       final isLoggedIn = _auth.currentUser != null;
-      print('Login check: $isLoggedIn');
+      debugPrint('Login check: $isLoggedIn');
       return isLoggedIn;
     } catch (e) {
-      print('Error checking login status: $e');
+      debugPrint('Error checking login status: $e');
       return false;
     }
   }

@@ -75,22 +75,20 @@ class UserService {
       final nameQuery = await _firestore
           .collection(AppConstants.usersCollection)
           .where('name', isGreaterThanOrEqualTo: query)
-          .where('name', isLessThan: query + 'z')
+          .where('name', isLessThan: '${query}z')
           .get();
 
       final emailQuery = await _firestore
           .collection(AppConstants.usersCollection)
           .where('email', isGreaterThanOrEqualTo: query)
-          .where('email', isLessThan: query + 'z')
+          .where('email', isLessThan: '${query}z')
           .get();
 
       // Combine + deduplicate
       final allDocs = [...nameQuery.docs, ...emailQuery.docs];
       final uniqueDocs = allDocs.toSet().toList();
 
-      return uniqueDocs
-          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      return uniqueDocs.map((doc) => UserModel.fromMap(doc.data())).toList();
     } catch (e) {
       throw Exception('Failed to search users: $e');
     }
@@ -117,7 +115,8 @@ class UserService {
           .ref()
           .child(AppConstants.userImagesPath)
           .child(
-          '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg');
+            '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
 
       final UploadTask uploadTask = storageRef.putFile(File(filePath));
       final TaskSnapshot snapshot = await uploadTask;
@@ -144,8 +143,9 @@ class UserService {
 
   Future<void> addAddress(String userId, Address address) async {
     try {
-      final userRef =
-      _firestore.collection(AppConstants.usersCollection).doc(userId);
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId);
 
       if (address.isDefault) {
         final userDoc = await userRef.get();
@@ -161,7 +161,7 @@ class UserService {
       }
 
       await userRef.update({
-        'addresses': FieldValue.arrayUnion([address.toMap()])
+        'addresses': FieldValue.arrayUnion([address.toMap()]),
       });
     } catch (e) {
       throw Exception('Failed to add address: $e');
@@ -170,8 +170,9 @@ class UserService {
 
   Future<void> updateAddress(String userId, Address address) async {
     try {
-      final userRef =
-      _firestore.collection(AppConstants.usersCollection).doc(userId);
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId);
 
       final userDoc = await userRef.get();
       if (userDoc.exists) {
@@ -198,8 +199,9 @@ class UserService {
 
   Future<void> deleteAddress(String userId, String addressId) async {
     try {
-      final userRef =
-      _firestore.collection(AppConstants.usersCollection).doc(userId);
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId);
 
       final userDoc = await userRef.get();
       if (userDoc.exists) {

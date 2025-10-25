@@ -25,35 +25,43 @@ class AdminNavigationDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Manage Products'),
-            onTap: () {
-              // Navigate to Product Management
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/manage-products');
-            },
-          ),
-          ListTile(
-            title: Text('Manage Orders'),
-            onTap: () {
-              // Navigate to Order Management
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/manage-orders');
-            },
-          ),
-          ListTile(
-            title: Text('Manage Users'),
+            title: Text('User Management'),
             onTap: () {
               // Navigate to User Management
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/manage-users');
+              Navigator.pushNamed(context, '/admin-users');
             },
           ),
           ListTile(
-            title: Text('View Analytics'),
+            title: Text('Enhanced Product Management'),
             onTap: () {
-              // Navigate to Analytics
+              // Navigate to Enhanced Product Management
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/analytics');
+              Navigator.pushNamed(context, '/enhanced-product-management');
+            },
+          ),
+          ListTile(
+            title: Text('Data Export/Import'),
+            onTap: () {
+              // Navigate to Data Export/Import
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/data-export-import');
+            },
+          ),
+          ListTile(
+            title: Text('Order Management'),
+            onTap: () {
+              // Navigate to Order Management
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/admin-orders');
+            },
+          ),
+          ListTile(
+            title: Text('Reports'),
+            onTap: () {
+              // Navigate to Reports
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/reports');
             },
           ),
         ],

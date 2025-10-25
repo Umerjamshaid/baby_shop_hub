@@ -395,9 +395,32 @@ class _NotificationManagementScreenState
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: EdgeInsets.zero,
-              title: const Text(
-                'Advanced Payload (optional)',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              title: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Advanced Payload (optional)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const _PayloadTutorialModal(),
+                      );
+                    },
+                    icon: const Icon(Icons.help_outline, size: 16),
+                    label: const Text('Help'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
               children: [
                 const SizedBox(height: 8),
@@ -407,6 +430,27 @@ class _NotificationManagementScreenState
                   icon: Icons.data_object,
                   hintText: '{"type":"offer","id":"123"}',
                   maxLines: 2,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lightbulb, color: Colors.blue, size: 16),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Need help with payloads? Click "Help" above for examples and testing.',
+                          style: TextStyle(fontSize: 12, color: Colors.blue),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -447,7 +491,7 @@ class _NotificationManagementScreenState
     String? hintText,
     int maxLines = 1,
   }) {
-    return Container(
+    return SizedBox(
       height: maxLines == 1 ? 45 : null,
       child: TextField(
         controller: controller,
@@ -511,7 +555,7 @@ class _NotificationManagementScreenState
                 Row(
                   children: [
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                         height: 40,
                         child: TextField(
                           controller: _searchController,
@@ -568,7 +612,7 @@ class _NotificationManagementScreenState
           ),
 
           // Users List
-          Container(
+          SizedBox(
             height: 300,
             child: ListView.builder(
               itemCount: _filteredUsers.length,
@@ -885,7 +929,7 @@ class _NotificationManagementScreenState
       child: Row(
         children: [
           Expanded(
-            child: Container(
+            child: SizedBox(
               height: 44,
               child: AppButton(
                 onPressed: _sendToAllUsers,
@@ -897,7 +941,7 @@ class _NotificationManagementScreenState
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
+            child: SizedBox(
               height: 44,
               child: AppButton(
                 onPressed: _sendNotification,
@@ -908,7 +952,7 @@ class _NotificationManagementScreenState
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
+            child: SizedBox(
               height: 44,
               child: AppButton(
                 onPressed: () async {
@@ -956,10 +1000,11 @@ class _NotificationManagementScreenState
                       SnackBar(content: Text('Failed to send to self: $e')),
                     );
                   } finally {
-                    if (mounted)
+                    if (mounted) {
                       setState(() {
                         _sending = false;
                       });
+                    }
                   }
                 },
                 text: 'Send to Myself',
@@ -986,6 +1031,386 @@ class _NotificationManagementScreenState
 class _DebugTools extends StatefulWidget {
   @override
   State<_DebugTools> createState() => _DebugToolsState();
+}
+
+class _PayloadTutorialModal extends StatefulWidget {
+  const _PayloadTutorialModal({super.key});
+
+  @override
+  State<_PayloadTutorialModal> createState() => _PayloadTutorialModalState();
+}
+
+class _PayloadTutorialModalState extends State<_PayloadTutorialModal> {
+  String _selectedExample = 'general';
+  final TextEditingController _testPayloadController = TextEditingController();
+  bool _isTesting = false;
+
+  final Map<String, Map<String, dynamic>> _payloadExamples = {
+    'general': {
+      'description': 'Basic notification without special actions',
+      'payload': '{"type": "general"}',
+      'explanation':
+          'Simple notification that opens the home screen when tapped.',
+    },
+    'product': {
+      'description': 'Product promotion with deep linking',
+      'payload':
+          '{"type": "product", "productId": "prod_12345", "imageUrl": "https://via.placeholder.com/400x300/FF6B6B/FFFFFF?text=Product+Image"}',
+      'explanation':
+          'Opens the specific product detail screen with image preview. Replace "prod_12345" with actual product ID and imageUrl with your product image.',
+    },
+    'order_update': {
+      'description': 'Order status update notification',
+      'payload':
+          '{"type": "order_update", "orderId": "order_67890", "imageUrl": "https://via.placeholder.com/400x300/74B9FF/FFFFFF?text=Order+Update"}',
+      'explanation':
+          'Opens the order confirmation screen with status image. Use for shipping updates, delivery confirmations, etc.',
+    },
+    'promotion': {
+      'description': 'Special offer or discount notification',
+      'payload':
+          '{"type": "promotion", "offerId": "promo_2024", "discount": "20%", "imageUrl": "https://via.placeholder.com/400x300/FDCB6E/000000?text=Special+Offer"}',
+      'explanation':
+          'Opens home screen with promotional content and discount image. Include discount details in payload.',
+    },
+    'cart_reminder': {
+      'description': 'Abandoned cart reminder',
+      'payload':
+          '{"type": "cart_reminder", "items": "3", "total": "\$45.99", "imageUrl": "https://via.placeholder.com/400x300/FD79A8/FFFFFF?text=Cart+Reminder"}',
+      'explanation':
+          'Reminds users about items in their cart with cart image. Opens cart screen.',
+    },
+    'new_arrival': {
+      'description': 'New product arrival announcement',
+      'payload':
+          '{"type": "new_arrival", "category": "baby_clothes", "count": "5", "imageUrl": "https://via.placeholder.com/400x300/00B894/FFFFFF?text=New+Arrival"}',
+      'explanation':
+          'Announces new products in a category with announcement image. Opens products list filtered by category.',
+    },
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _testPayloadController.text =
+        _payloadExamples['general']!['payload'] as String;
+  }
+
+  Future<void> _testPayload() async {
+    if (_testPayloadController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a payload to test')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTesting = true;
+    });
+
+    try {
+      Map<String, dynamic>? parsedPayload;
+      try {
+        parsedPayload =
+            jsonDecode(_testPayloadController.text.trim())
+                as Map<String, dynamic>?;
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Invalid JSON format: $e')));
+        return;
+      }
+
+      // Extract image URL from payload if present
+      String? imageUrl;
+      if (parsedPayload != null) {
+        imageUrl = parsedPayload['imageUrl'] as String?;
+      }
+
+      // Send test notification with the payload and image
+      await NotificationService().showLocalNotification(
+        title: 'Payload Test',
+        body: 'Testing your custom payload with image support',
+        payload: parsedPayload?['type'] ?? 'general',
+        imageUrl: imageUrl,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Test notification sent! Check your device for image display.',
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Test failed: $e')));
+    } finally {
+      setState(() {
+        _isTesting = false;
+      });
+    }
+  }
+
+  void _loadExample(String type) {
+    setState(() {
+      _selectedExample = type;
+      _testPayloadController.text =
+          _payloadExamples[type]!['payload'] as String;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.school, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Notification Payload Tutorial',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Introduction
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '📚 What are Notification Payloads?',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Payloads are JSON data attached to notifications that tell the app what to do when the user taps the notification. They enable deep linking to specific screens and passing data.',
+                            style: TextStyle(fontSize: 14, color: Colors.blue),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Example Selection
+                    const Text(
+                      '🎯 Choose an Example:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _payloadExamples.entries.map((entry) {
+                        final isSelected = _selectedExample == entry.key;
+                        return FilterChip(
+                          label: Text(
+                            entry.key.replaceAll('_', ' ').toUpperCase(),
+                          ),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) _loadExample(entry.key);
+                          },
+                          backgroundColor: Colors.grey[100],
+                          selectedColor: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.2),
+                          checkmarkColor: Theme.of(context).primaryColor,
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Current Example Details
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _payloadExamples[_selectedExample]!['description']
+                                as String,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _payloadExamples[_selectedExample]!['explanation']
+                                as String,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Payload Editor
+                    const Text(
+                      '✏️ Edit Payload:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    TextField(
+                      controller: _testPayloadController,
+                      maxLines: 3,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '{"type": "general"}',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Test Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isTesting ? null : _testPayload,
+                        icon: _isTesting
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.send),
+                        label: Text(_isTesting ? 'Testing...' : '🚀 Try It!'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Tips
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber[200]!),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '💡 Pro Tips:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.amber,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            '• Always include a "type" field to specify notification behavior\n'
+                            '• Use meaningful IDs (productId, orderId, etc.) for deep linking\n'
+                            '• Add "imageUrl" field for rich notifications with image previews\n'
+                            '• Keep payloads small for better performance\n'
+                            '• Test payloads before sending to all users\n'
+                            '• Images are automatically downloaded and cached for system tray display',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.amber,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _testPayloadController.dispose();
+    super.dispose();
+  }
 }
 
 class _DebugToolsState extends State<_DebugTools> {
@@ -1023,9 +1448,20 @@ class _DebugToolsState extends State<_DebugTools> {
     );
   }
 
+  // Generate a safe notification ID within 32-bit integer range
+  int _generateSafeNotificationId() {
+    // Use current time in seconds (much smaller) combined with a hash
+    final int timestamp =
+        DateTime.now().millisecondsSinceEpoch ~/ 1000; // Convert to seconds
+    final int hash = timestamp.hashCode.abs(); // Get positive hash
+    // Ensure it fits within 32-bit signed integer range
+    return hash % 0x7FFFFFFF; // Max 32-bit signed integer
+  }
+
   Future<void> _forceTrayTest() async {
     try {
-      final int nid = DateTime.now().millisecondsSinceEpoch & 0x7fffffff;
+      // Generate a safe notification ID within 32-bit integer range
+      final int nid = _generateSafeNotificationId();
       await awesome.AwesomeNotifications().createNotification(
         content: awesome.NotificationContent(
           id: nid,
@@ -1045,6 +1481,13 @@ class _DebugToolsState extends State<_DebugTools> {
         context,
       ).showSnackBar(SnackBar(content: Text('Tray test failed: $e')));
     }
+  }
+
+  void _showPayloadTutorial() {
+    showDialog(
+      context: context,
+      builder: (context) => const _PayloadTutorialModal(),
+    );
   }
 
   @override
@@ -1091,6 +1534,11 @@ class _DebugToolsState extends State<_DebugTools> {
                 onPressed: _forceTrayTest,
                 label: 'Force Tray Test',
                 color: Colors.orange,
+              ),
+              _buildDebugButton(
+                onPressed: _showPayloadTutorial,
+                label: 'Payload Tutorial',
+                color: Colors.purple,
               ),
             ],
           ),

@@ -13,6 +13,9 @@ class Order {
   final String? trackingNumber;
   final String? carrier;
   final List<OrderStatusUpdate> statusUpdates;
+  final double? refundAmount;
+  final String? refundReason;
+  final DateTime? refundDate;
 
   Order({
     required this.id,
@@ -27,6 +30,9 @@ class Order {
     this.trackingNumber,
     this.carrier,
     this.statusUpdates = const [],
+    this.refundAmount,
+    this.refundReason,
+    this.refundDate,
   });
 
   Map<String, dynamic> toMap() {
@@ -43,6 +49,9 @@ class Order {
       'trackingNumber': trackingNumber,
       'carrier': carrier,
       'statusUpdates': statusUpdates.map((update) => update.toMap()).toList(),
+      'refundAmount': refundAmount,
+      'refundReason': refundReason,
+      'refundDate': refundDate?.toIso8601String(),
     };
   }
 
@@ -57,13 +66,20 @@ class Order {
       status: map['status'] ?? 'pending',
       shippingAddress: ShippingAddress.fromMap(map['shippingAddress'] ?? {}),
       orderDate: DateTime.parse(map['orderDate']),
-      deliveryDate: map['deliveryDate'] != null ? DateTime.parse(map['deliveryDate']) : null,
+      deliveryDate: map['deliveryDate'] != null
+          ? DateTime.parse(map['deliveryDate'])
+          : null,
       paymentMethod: map['paymentMethod'] ?? '',
       trackingNumber: map['trackingNumber'],
       carrier: map['carrier'],
       statusUpdates: List<OrderStatusUpdate>.from(
         map['statusUpdates']?.map((x) => OrderStatusUpdate.fromMap(x)) ?? [],
       ),
+      refundAmount: map['refundAmount']?.toDouble(),
+      refundReason: map['refundReason'],
+      refundDate: map['refundDate'] != null
+          ? DateTime.parse(map['refundDate'])
+          : null,
     );
   }
   // ADD THIS COPYWITH METHOD
@@ -80,6 +96,9 @@ class Order {
     String? trackingNumber,
     String? carrier,
     List<OrderStatusUpdate>? statusUpdates,
+    double? refundAmount,
+    String? refundReason,
+    DateTime? refundDate,
   }) {
     return Order(
       id: id ?? this.id,
@@ -94,6 +113,9 @@ class Order {
       trackingNumber: trackingNumber ?? this.trackingNumber,
       carrier: carrier ?? this.carrier,
       statusUpdates: statusUpdates ?? this.statusUpdates,
+      refundAmount: refundAmount ?? this.refundAmount,
+      refundReason: refundReason ?? this.refundReason,
+      refundDate: refundDate ?? this.refundDate,
     );
   }
 
@@ -120,12 +142,13 @@ class Order {
         return Colors.blue;
       case 'Processing':
         return Colors.orange;
+      case 'Refunded':
+        return Colors.purple;
       default:
         return Colors.grey;
     }
   }
 }
-
 
 class OrderItem {
   final String productId;
@@ -199,7 +222,7 @@ class OrderStatusUpdate {
 
 class ShippingAddress {
   final String id;
-  final String fullName;  // Make sure this is 'fullName' not 'name'
+  final String fullName; // Make sure this is 'fullName' not 'name'
   final String phone;
   final String street;
   final String city;
@@ -210,7 +233,7 @@ class ShippingAddress {
 
   ShippingAddress({
     required this.id,
-    required this.fullName,  // This should be fullName
+    required this.fullName, // This should be fullName
     required this.phone,
     required this.street,
     required this.city,
@@ -223,7 +246,7 @@ class ShippingAddress {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'fullName': fullName,  // Make sure this matches
+      'fullName': fullName, // Make sure this matches
       'phone': phone,
       'street': street,
       'city': city,
@@ -237,7 +260,7 @@ class ShippingAddress {
   factory ShippingAddress.fromMap(Map<String, dynamic> map) {
     return ShippingAddress(
       id: map['id'] ?? '',
-      fullName: map['fullName'] ?? '',  // And here
+      fullName: map['fullName'] ?? '', // And here
       phone: map['phone'] ?? '',
       street: map['street'] ?? '',
       city: map['city'] ?? '',

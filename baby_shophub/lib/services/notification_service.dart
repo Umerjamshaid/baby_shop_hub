@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 // Removed unused imports
@@ -6,6 +8,10 @@ import 'package:awesome_notifications/awesome_notifications.dart' as awesome;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 import '../models/notification_model.dart';
 import '../utils/constants.dart';
@@ -31,6 +37,7 @@ class NotificationService {
 
   // -------------------- 🔹 INITIALIZATION --------------------
   Future<void> initializeNotifications() async {
+    // Request Firebase Messaging permissions
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -38,12 +45,22 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('✅ User granted permission');
+      print('✅ User granted FCM permission');
+    }
+
+    // Request Awesome Notifications permissions
+    final isAllowed = await awesome.AwesomeNotifications()
+        .isNotificationAllowed();
+    if (!isAllowed) {
+      await awesome.AwesomeNotifications()
+          .requestPermissionToSendNotifications();
+      print('✅ Requested Awesome Notifications permission');
     }
 
     String? token = await _firebaseMessaging.getToken();
     print("📲 FCM Token: $token");
 
+    // Initialize Flutter Local Notifications
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -88,6 +105,50 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     await androidPlugin?.createNotificationChannel(channel);
+
+    // Initialize Awesome Notifications with all channels
+    await awesome.AwesomeNotifications()
+        .initialize('resource://drawable/ic_launcher', [
+          awesome.NotificationChannel(
+            channelKey: 'order_updates',
+            channelName: 'Order Updates',
+            channelDescription: 'Notifications for order status updates',
+            importance: awesome.NotificationImportance.High,
+            defaultColor: const Color(0xFF2196F3),
+            ledColor: const Color(0xFF2196F3),
+            channelShowBadge: true,
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            icon: 'resource://drawable/ic_launcher',
+          ),
+          awesome.NotificationChannel(
+            channelKey: 'local_channel',
+            channelName: 'Local Notifications',
+            channelDescription: 'Local reminders and app events',
+            importance: awesome.NotificationImportance.High,
+            defaultColor: const Color(0xFF2196F3),
+            ledColor: const Color(0xFF2196F3),
+            channelShowBadge: true,
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            icon: 'resource://drawable/ic_launcher',
+          ),
+          awesome.NotificationChannel(
+            channelKey: 'rich_channel',
+            channelName: 'Rich Notifications',
+            channelDescription: 'Big-picture & action-button notifications',
+            defaultColor: const Color(0xFF2196F3),
+            importance: awesome.NotificationImportance.High,
+            channelShowBadge: true,
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            icon: 'resource://drawable/ic_launcher',
+          ),
+        ]);
+
     // Listen to Awesome Notifications action buttons
     try {
       await awesome.AwesomeNotifications().setListeners(
@@ -263,10 +324,7 @@ class NotificationService {
           .get();
 
       return snapshot.docs
-          .map(
-            (doc) =>
-                NotificationModel.fromMap(doc.data() as Map<String, dynamic>),
-          )
+          .map((doc) => NotificationModel.fromMap(doc.data()))
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch user notifications: $e');
@@ -286,72 +344,96 @@ class NotificationService {
     }
   }
 
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _firestore
+          .collection(AppConstants.notificationsCollection)
+          .doc(notificationId)
+          .delete();
+    } catch (e) {
+      throw Exception('Failed to delete notification: $e');
+    }
+  }
+
   // -------------------- 🔹 FCM HANDLERS --------------------
   // Background handled by top-level function
 
-  Future<void> _showNotification(RemoteMessage message) async {
-    final String title = message.notification?.title ?? 'BabyShopHub';
-    final String body = message.notification?.body ?? 'New notification';
-    final String? imageUrl =
-        message.data['imageUrl'] ??
-        message.notification?.android?.imageUrl ??
-        message.notification?.apple?.imageUrl;
+  Future<void> _showNotification(RemoteMessage msg) async {
+    final data = msg.data;
+    final type = data['type'] ?? 'general';
+    final title = msg.notification?.title ?? 'BabyShopHub';
+    final body = msg.notification?.body ?? '';
+    final img =
+        data['imageUrl'] ??
+        msg.notification?.android?.imageUrl ??
+        msg.notification?.apple?.imageUrl;
 
-    try {
-      final int nid =
-          ((message.messageId?.hashCode ??
-              DateTime.now().millisecondsSinceEpoch) &
-          0x7fffffff);
-      final String type = message.data['type']?.toString() ?? 'general';
-      final String productId = message.data['productId']?.toString() ?? '';
-      await awesome.AwesomeNotifications().createNotification(
-        content: awesome.NotificationContent(
-          id: nid,
-          channelKey: 'order_updates',
-          title: title,
-          body: body,
-          notificationLayout: imageUrl != null && imageUrl.isNotEmpty
-              ? awesome.NotificationLayout.BigPicture
-              : awesome.NotificationLayout.Default,
-          bigPicture: imageUrl,
-          payload: {'type': type, 'productId': productId},
+    // 1. Build dynamic big-picture card
+    String? bigPicture;
+    if (img != null && img.isNotEmpty) {
+      bigPicture = await _getLocalImagePath(img); // cached
+    }
+
+    // 2. Action buttons (Daraz style)
+    List<awesome.NotificationActionButton> actions = [];
+    if (type == 'price_drop' || type == 'product') {
+      actions = [
+        awesome.NotificationActionButton(
+          key: 'VIEW',
+          label: 'View Product',
+          actionType: awesome.ActionType.Default,
         ),
-        actionButtons: (type == 'product' && productId.isNotEmpty)
-            ? [
-                awesome.NotificationActionButton(
-                  key: 'VIEW',
-                  label: 'View',
-                  actionType: awesome.ActionType.Default,
-                ),
-                awesome.NotificationActionButton(
-                  key: 'SAVE',
-                  label: 'Save',
-                  actionType: awesome.ActionType.Default,
-                ),
-              ]
-            : null,
-      );
-    } catch (_) {
-      // Fallback to flutter_local_notifications
-      const android = AndroidNotificationDetails(
-        'order_updates',
-        'Order Updates',
-        channelDescription: 'Notifications for order status updates',
-        importance: Importance.max,
-        priority: Priority.high,
-      );
-      const iOS = DarwinNotificationDetails();
-      final int safeId =
-          ((message.messageId?.hashCode ??
-              DateTime.now().millisecondsSinceEpoch) &
-          0x7fffffff);
-      await _flutterLocalNotificationsPlugin.show(
-        safeId,
-        title,
-        body,
-        const NotificationDetails(android: android, iOS: iOS),
-        payload: message.data['type'] ?? 'general',
-      );
+        awesome.NotificationActionButton(
+          key: 'SAVE',
+          label: 'Save for Later',
+          actionType: awesome.ActionType.Default,
+        ),
+      ];
+    } else if (type == 'order_shipped') {
+      actions = [
+        awesome.NotificationActionButton(
+          key: 'TRACK',
+          label: 'Track Order',
+          actionType: awesome.ActionType.Default,
+        ),
+      ];
+    }
+
+    // 3. Send rich card
+    final int id = _generateSafeNotificationId();
+    await awesome.AwesomeNotifications().createNotification(
+      content: awesome.NotificationContent(
+        id: id,
+        channelKey: 'rich_channel',
+        title: title,
+        body: _buildRichBody(type, data, body), // see helper below
+        notificationLayout: bigPicture != null
+            ? awesome.NotificationLayout.BigPicture
+            : awesome.NotificationLayout.Default,
+        bigPicture: bigPicture,
+        largeIcon: bigPicture,
+        payload: data.map((k, v) => MapEntry(k, v.toString())),
+      ),
+      actionButtons: actions,
+    );
+  }
+
+  String _buildRichBody(
+    String type,
+    Map<String, dynamic> data,
+    String fallback,
+  ) {
+    switch (type) {
+      case 'price_drop':
+        return '🔥 ${data['discount']}% OFF – was ₹${data['oldPrice']} now ₹${data['newPrice']}';
+      case 'stock_low':
+        return '⚠️ Only ${data['stockLeft']} left in stock – hurry!';
+      case 'cart_reminder':
+        return '🛒 You left ${data['items']} items (${data['total']}) in your cart';
+      case 'order_shipped':
+        return '🚚 Order #${data['orderId']} is out for delivery';
+      default:
+        return fallback;
     }
   }
 
@@ -374,20 +456,45 @@ class NotificationService {
       return;
     }
     switch (type) {
-      case 'order_update':
-        navigator.pushNamed('/order-confirmation');
-        return;
+      case 'price_drop':
       case 'product':
-        final pid = data['productId']?.toString();
+        final pid = data['productId'] as String?;
         if (pid != null && pid.isNotEmpty) {
           navigator.pushNamed('/product', arguments: {'id': pid});
-          return;
         }
-        navigator.pushNamed('/home');
+        break;
+      case 'cart_reminder':
+        navigator.pushNamed('/cart');
+        break;
+      case 'order_shipped':
+        final orderId = data['orderId'] as String?;
+        if (orderId != null && orderId.isNotEmpty) {
+          navigator.pushNamed(
+            '/order-tracking',
+            arguments: {'orderId': orderId},
+          );
+        } else {
+          navigator.pushNamed('/orders');
+        }
+        break;
+      case 'order_update':
+        final orderId = data['orderId']?.toString();
+        if (orderId != null && orderId.isNotEmpty) {
+          navigator.pushNamed('/order-detail', arguments: {'orderId': orderId});
+        } else {
+          navigator.pushNamed('/orders');
+        }
+        return;
+      case 'order_delivered':
+        final orderId = data['orderId']?.toString();
+        if (orderId != null && orderId.isNotEmpty) {
+          navigator.pushNamed('/order-detail', arguments: {'orderId': orderId});
+        } else {
+          navigator.pushNamed('/orders');
+        }
         return;
       case 'new_arrival':
       case 'offer':
-      case 'cart_reminder':
       case 'general':
       default:
         navigator.pushNamed('/home');
@@ -431,35 +538,265 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    String? imageUrl,
   }) async {
+    // Generate a safe notification ID within 32-bit integer range
+    final int safeId = _generateSafeNotificationId();
+
+    // Download and cache image if provided
+    String? localImagePath;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      localImagePath = await _getLocalImagePath(imageUrl);
+    }
+
     try {
       await awesome.AwesomeNotifications().createNotification(
         content: awesome.NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch,
+          id: safeId,
           channelKey: 'local_channel',
           title: title,
           body: body,
+          notificationLayout: localImagePath != null
+              ? awesome.NotificationLayout.BigPicture
+              : awesome.NotificationLayout.Default,
+          bigPicture: localImagePath,
+          largeIcon: localImagePath,
           payload: payload == null ? null : {'type': payload},
         ),
       );
-    } catch (_) {
-      const android = AndroidNotificationDetails(
-        'local_channel',
-        'Local Notifications',
-        channelDescription:
-            'This channel is used for local reminders (not from FCM).',
-        importance: Importance.high,
-        priority: Priority.high,
-      );
-      const iOS = DarwinNotificationDetails();
-      await _flutterLocalNotificationsPlugin.show(
-        DateTime.now().millisecondsSinceEpoch,
-        title,
-        body,
-        const NotificationDetails(android: android, iOS: iOS),
-        payload: payload,
-      );
+    } catch (e) {
+      print('❌ Awesome Notifications failed for local: $e');
+      // Fallback to flutter_local_notifications
+      try {
+        late AndroidNotificationDetails android;
+        if (localImagePath != null) {
+          android = AndroidNotificationDetails(
+            'local_channel',
+            'Local Notifications',
+            channelDescription:
+                'This channel is used for local reminders (not from FCM).',
+            importance: Importance.high,
+            priority: Priority.high,
+            styleInformation: BigPictureStyleInformation(
+              FilePathAndroidBitmap(localImagePath),
+              contentTitle: title,
+              summaryText: body,
+            ),
+          );
+        } else {
+          android = const AndroidNotificationDetails(
+            'local_channel',
+            'Local Notifications',
+            channelDescription:
+                'This channel is used for local reminders (not from FCM).',
+            importance: Importance.high,
+            priority: Priority.high,
+          );
+        }
+
+        const iOS = DarwinNotificationDetails();
+        await _flutterLocalNotificationsPlugin.show(
+          safeId,
+          title,
+          body,
+          NotificationDetails(android: android, iOS: iOS),
+          payload: payload,
+        );
+      } catch (fallbackError) {
+        print('❌ Fallback local notification failed: $fallbackError');
+        // Final fallback - text only
+        const android = AndroidNotificationDetails(
+          'local_channel',
+          'Local Notifications',
+          channelDescription:
+              'This channel is used for local reminders (not from FCM).',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
+        const iOS = DarwinNotificationDetails();
+        await _flutterLocalNotificationsPlugin.show(
+          safeId,
+          title,
+          body,
+          const NotificationDetails(android: android, iOS: iOS),
+          payload: payload,
+        );
+      }
     }
+  }
+
+  // Generate a safe notification ID within 32-bit integer range
+  int _generateSafeNotificationId() {
+    // Use current time in seconds (much smaller) combined with a hash
+    final int timestamp =
+        DateTime.now().millisecondsSinceEpoch ~/ 1000; // Convert to seconds
+    final int hash = timestamp.hashCode.abs(); // Get positive hash
+    // Ensure it fits within 32-bit signed integer range
+    return hash % 0x7FFFFFFF; // Max 32-bit signed integer
+  }
+
+  // -------------------- 🔹 IMAGE DOWNLOAD & CACHING --------------------
+  Future<String?> _downloadAndCacheImage(String imageUrl) async {
+    try {
+      // Get temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final fileName = path.basename(
+        imageUrl.split('?').first,
+      ); // Remove query params
+      final localPath = path.join(
+        tempDir.path,
+        'notification_images',
+        fileName,
+      );
+
+      // Create directory if it doesn't exist
+      final imageDir = Directory(path.dirname(localPath));
+      if (!await imageDir.exists()) {
+        await imageDir.create(recursive: true);
+      }
+
+      // Check if file already exists
+      final localFile = File(localPath);
+      if (await localFile.exists()) {
+        return localPath;
+      }
+
+      // Download image
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        await localFile.writeAsBytes(response.bodyBytes);
+        return localPath;
+      } else {
+        print('❌ Failed to download image: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error downloading image: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _getLocalImagePath(String? imageUrl) async {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return null;
+    }
+
+    // If it's already a local file path, return as is
+    if (imageUrl.startsWith('/') || imageUrl.contains('file://')) {
+      return imageUrl;
+    }
+
+    // If it's a network URL, download and cache it
+    if (imageUrl.startsWith('http')) {
+      return await _downloadAndCacheImage(imageUrl);
+    }
+
+    // For other cases, return null
+    return null;
+  }
+
+  // -------------------- 🔹 ORDER-SPECIFIC NOTIFICATIONS --------------------
+
+  /// Send order status update notification
+  Future<void> sendOrderStatusNotification({
+    required String userId,
+    required String orderId,
+    required String status,
+    String? trackingNumber,
+    String? carrier,
+  }) async {
+    String title;
+    String body;
+    String type;
+
+    switch (status) {
+      case 'Processing':
+        title = 'Order Processing Started';
+        body = 'Your order #$orderId is now being processed';
+        type = 'order_update';
+        break;
+      case 'Confirmed':
+        title = 'Order Confirmed';
+        body = 'Your order #$orderId has been confirmed';
+        type = 'order_update';
+        break;
+      case 'Shipped':
+        title = 'Order Shipped!';
+        body = trackingNumber != null
+            ? 'Your order #$orderId has been shipped. Track with: $trackingNumber'
+            : 'Your order #$orderId has been shipped';
+        type = 'order_shipped';
+        break;
+      case 'Delivered':
+        title = 'Order Delivered!';
+        body = 'Your order #$orderId has been delivered successfully';
+        type = 'order_delivered';
+        break;
+      case 'Cancelled':
+        title = 'Order Cancelled';
+        body = 'Your order #$orderId has been cancelled';
+        type = 'order_update';
+        break;
+      default:
+        title = 'Order Update';
+        body = 'Your order #$orderId status: $status';
+        type = 'order_update';
+    }
+
+    // Send to specific user topic
+    await sendNotificationToUsers(
+      title: title,
+      message: body,
+      userIds: [userId],
+      data: {
+        'type': type,
+        'orderId': orderId,
+        'status': status,
+        'trackingNumber': trackingNumber,
+        'carrier': carrier,
+      },
+    );
+
+    // Also send local notification if app is in foreground
+    await showLocalNotification(title: title, body: body, payload: type);
+  }
+
+  /// Send shipment tracking update notification
+  Future<void> sendShipmentTrackingNotification({
+    required String userId,
+    required String orderId,
+    required String trackingNumber,
+    required String carrier,
+    String? status,
+  }) async {
+    final title = 'Shipment Update';
+    final body = 'Tracking update for order #$orderId: $status';
+
+    await sendNotificationToUsers(
+      title: title,
+      message: body,
+      userIds: [userId],
+      data: {
+        'type': 'order_shipped',
+        'orderId': orderId,
+        'trackingNumber': trackingNumber,
+        'carrier': carrier,
+        'status': status,
+      },
+    );
+  }
+
+  /// Send delivery confirmation notification
+  Future<void> sendDeliveryNotification({
+    required String userId,
+    required String orderId,
+  }) async {
+    await sendNotificationToUsers(
+      title: 'Package Delivered!',
+      message: 'Your order #$orderId has been delivered. Enjoy your purchase!',
+      userIds: [userId],
+      data: {'type': 'order_delivered', 'orderId': orderId},
+    );
   }
 
   Future<void> initialize() async {

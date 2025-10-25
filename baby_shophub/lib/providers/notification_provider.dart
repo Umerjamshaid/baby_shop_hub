@@ -36,11 +36,7 @@ class NotificationProvider with ChangeNotifier {
           (snapshot) async {
             final newNotifications =
                 snapshot.docs
-                    .map(
-                      (doc) => NotificationModel.fromMap(
-                        doc.data() as Map<String, dynamic>,
-                      ),
-                    )
+                    .map((doc) => NotificationModel.fromMap(doc.data()))
                     .toList()
                   ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
 
@@ -121,6 +117,17 @@ class NotificationProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error marking all notifications as read: $e');
+    }
+  }
+
+  // ✅ Delete notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _notificationService.deleteNotification(notificationId);
+      _notifications.removeWhere((n) => n.id == notificationId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting notification: $e');
     }
   }
 

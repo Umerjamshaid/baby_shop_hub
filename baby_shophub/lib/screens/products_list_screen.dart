@@ -30,6 +30,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
   final ScrollController _scrollController = ScrollController();
   String _currentSort = 'name';
   bool _isGridView = true;
+  bool _showScrollToTop = false;
   late SearchFilters _filters;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -56,6 +57,15 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProducts();
       _animationController.forward();
+    });
+
+    _scrollController.addListener(() {
+      final shouldShow = _scrollController.offset > 300;
+      if (shouldShow != _showScrollToTop) {
+        setState(() {
+          _showScrollToTop = shouldShow;
+        });
+      }
     });
   }
 
@@ -259,10 +269,50 @@ class _ProductsListScreenState extends State<ProductsListScreen>
               return _buildNoResultsState(widget.searchQuery ?? _filters.query);
             }
 
-            return _isGridView
-                ? _buildEnhancedGridView(products)
-                : _buildEnhancedListView(products);
+            return RefreshIndicator(
+              onRefresh: () async {
+                _loadProducts();
+              },
+              color: const Color(0xFF6B73FF),
+              backgroundColor: Colors.white,
+              child: _isGridView
+                  ? _buildEnhancedGridView(products)
+                  : _buildEnhancedListView(products),
+            );
           },
+        ),
+      ),
+      floatingActionButton: AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _showScrollToTop ? 1.0 : 0.0,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            scale: _showScrollToTop ? 1.0 : 0.9,
+            child: SafeArea(
+            minimum: const EdgeInsets.only(bottom: 8),
+            child: FloatingActionButton(
+            onPressed: () {
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOut,
+              );
+            },
+            backgroundColor: Theme.of(context).primaryColor,
+            tooltip: 'Scroll to top',
+              mini: true,
+              heroTag: 'products_list_scroll_top',
+              child: const Icon(
+                Icons.keyboard_arrow_up_rounded,
+                color: Colors.white,
+              ),
+            ),
+            ),
+          ),
         ),
       ),
     );

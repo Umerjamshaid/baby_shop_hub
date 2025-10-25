@@ -32,6 +32,14 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
   final _brandController = TextEditingController();
   final _ageRangeController = TextEditingController();
   final _discountController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _lengthController = TextEditingController();
+  final _widthController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _skuController = TextEditingController();
+  final _warrantyController = TextEditingController();
+  final _originCountryController = TextEditingController();
+  final _tagsController = TextEditingController();
 
   List<String> _imageUrls = [];
   List<Category> _categories = [];
@@ -41,6 +49,12 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
   bool _isEcoFriendly = false;
   bool _isOrganic = false;
   bool _categoriesLoading = true;
+
+  // New optional fields
+  List<String> _selectedSizes = [];
+  List<String> _selectedColors = [];
+  List<String> _selectedMaterials = [];
+  List<String> _tags = [];
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -76,6 +90,14 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
     _brandController.dispose();
     _ageRangeController.dispose();
     _discountController.dispose();
+    _weightController.dispose();
+    _lengthController.dispose();
+    _widthController.dispose();
+    _heightController.dispose();
+    _skuController.dispose();
+    _warrantyController.dispose();
+    _originCountryController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -93,6 +115,20 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
       _discountController.text = widget.product!.discountPercentage.toString();
       _isEcoFriendly = widget.product!.isEcoFriendly;
       _isOrganic = widget.product!.isOrganic;
+
+      // Populate new optional fields
+      _weightController.text = widget.product!.weight?.toString() ?? '';
+      _lengthController.text = widget.product!.length?.toString() ?? '';
+      _widthController.text = widget.product!.width?.toString() ?? '';
+      _heightController.text = widget.product!.height?.toString() ?? '';
+      _skuController.text = widget.product!.sku ?? '';
+      _warrantyController.text = widget.product!.warranty ?? '';
+      _originCountryController.text = widget.product!.originCountry ?? '';
+      _selectedSizes = List.from(widget.product!.sizes);
+      _selectedColors = List.from(widget.product!.colors);
+      _selectedMaterials = List.from(widget.product!.materials);
+      _tags = List.from(widget.product!.tags);
+      _tagsController.text = _tags.join(', ');
     }
   }
 
@@ -190,6 +226,30 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
           rating: widget.product?.rating ?? 0,
           reviewCount: widget.product?.reviewCount ?? 0,
           createdAt: widget.product?.createdAt ?? DateTime.now(),
+          // New optional fields
+          weight: double.tryParse(_weightController.text),
+          length: double.tryParse(_lengthController.text),
+          width: double.tryParse(_widthController.text),
+          height: double.tryParse(_heightController.text),
+          sku: _skuController.text.trim().isEmpty
+              ? null
+              : _skuController.text.trim(),
+          tags: _tagsController.text.trim().isEmpty
+              ? []
+              : _tagsController.text
+                    .trim()
+                    .split(',')
+                    .map((tag) => tag.trim())
+                    .toList(),
+          warranty: _warrantyController.text.trim().isEmpty
+              ? null
+              : _warrantyController.text.trim(),
+          originCountry: _originCountryController.text.trim().isEmpty
+              ? null
+              : _originCountryController.text.trim(),
+          sizes: _selectedSizes,
+          colors: _selectedColors,
+          materials: _selectedMaterials,
         );
 
         if (widget.product == null) {
@@ -369,6 +429,8 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
             _buildPricingStockSection(),
             const SizedBox(height: 6),
             _buildCategoryBrandSection(),
+            const SizedBox(height: 6),
+            _buildAdditionalAttributesSection(),
             const SizedBox(height: 6),
             _buildSettingsSection(),
             const SizedBox(height: 24),
@@ -797,6 +859,240 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAdditionalAttributesSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+              'Additional Attributes',
+              Icons.extension_outlined,
+            ),
+            const SizedBox(height: 6),
+            // Weight and Dimensions
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _weightController,
+                    label: 'Weight (kg)',
+                    icon: Icons.monitor_weight_outlined,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _lengthController,
+                    label: 'Length (cm)',
+                    icon: Icons.straighten,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _widthController,
+                    label: 'Width (cm)',
+                    icon: Icons.width_normal,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _heightController,
+                    label: 'Height (cm)',
+                    icon: Icons.height,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // SKU and Warranty
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _skuController,
+                    label: 'SKU',
+                    icon: Icons.qr_code,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _warrantyController,
+                    label: 'Warranty',
+                    icon: Icons.shield_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Origin Country and Tags
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _originCountryController,
+                    label: 'Origin Country',
+                    icon: Icons.flag_outlined,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStyledTextField(
+                    controller: _tagsController,
+                    label: 'Tags (comma separated)',
+                    icon: Icons.tag,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Sizes, Colors, Materials dropdowns
+            _buildMultiSelectDropdown(
+              label: 'Sizes',
+              icon: Icons.format_size,
+              options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
+              selectedValues: _selectedSizes,
+              onChanged: (values) => setState(() => _selectedSizes = values),
+            ),
+            const SizedBox(height: 6),
+            _buildMultiSelectDropdown(
+              label: 'Colors',
+              icon: Icons.color_lens,
+              options: [
+                'Red',
+                'Blue',
+                'Green',
+                'Yellow',
+                'Black',
+                'White',
+                'Gray',
+                'Pink',
+                'Purple',
+                'Orange',
+                'Brown',
+              ],
+              selectedValues: _selectedColors,
+              onChanged: (values) => setState(() => _selectedColors = values),
+            ),
+            const SizedBox(height: 6),
+            _buildMultiSelectDropdown(
+              label: 'Materials',
+              icon: Icons.texture,
+              options: [
+                'Cotton',
+                'Polyester',
+                'Wool',
+                'Silk',
+                'Leather',
+                'Plastic',
+                'Metal',
+                'Wood',
+                'Glass',
+                'Ceramic',
+              ],
+              selectedValues: _selectedMaterials,
+              onChanged: (values) =>
+                  setState(() => _selectedMaterials = values),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMultiSelectDropdown({
+    required String label,
+    required IconData icon,
+    required List<String> options,
+    required List<String> selectedValues,
+    required ValueChanged<List<String>> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ExpansionTile(
+            title: Row(
+              children: [
+                Icon(icon, color: Colors.blue[600], size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  selectedValues.isEmpty
+                      ? 'Select $label'
+                      : '${selectedValues.length} selected',
+                  style: TextStyle(
+                    color: selectedValues.isEmpty
+                        ? Colors.grey[600]
+                        : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            children: options.map((option) {
+              return CheckboxListTile(
+                title: Text(option),
+                value: selectedValues.contains(option),
+                onChanged: (bool? value) {
+                  if (value == true) {
+                    onChanged([...selectedValues, option]);
+                  } else {
+                    onChanged(
+                      selectedValues.where((item) => item != option).toList(),
+                    );
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 

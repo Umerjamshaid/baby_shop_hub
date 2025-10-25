@@ -22,6 +22,16 @@ class Product {
   final bool isOrganic;
   final double discountPercentage;
 
+  // Additional e-commerce attributes (optional)
+  final double? weight; // in kg
+  final double? length; // in cm
+  final double? width; // in cm
+  final double? height; // in cm
+  final String? sku;
+  final List<String> tags;
+  final String? warranty;
+  final String? originCountry;
+
   Product({
     required this.id,
     required this.name,
@@ -43,6 +53,14 @@ class Product {
     this.isEcoFriendly = false,
     this.isOrganic = false,
     this.discountPercentage = 0.0,
+    this.weight,
+    this.length,
+    this.width,
+    this.height,
+    this.sku,
+    this.tags = const [],
+    this.warranty,
+    this.originCountry,
   });
 
   Map<String, dynamic> toMap() {
@@ -67,6 +85,14 @@ class Product {
       'isEcoFriendly': isEcoFriendly,
       'isOrganic': isOrganic,
       'discountPercentage': discountPercentage,
+      'weight': weight,
+      'length': length,
+      'width': width,
+      'height': height,
+      'sku': sku,
+      'tags': tags,
+      'warranty': warranty,
+      'originCountry': originCountry,
     };
   }
 
@@ -96,6 +122,14 @@ class Product {
       isEcoFriendly: map['isEcoFriendly'] ?? false,
       isOrganic: map['isOrganic'] ?? false,
       discountPercentage: (map['discountPercentage'] ?? 0).toDouble(),
+      weight: map['weight'] != null ? (map['weight'] as num).toDouble() : null,
+      length: map['length'] != null ? (map['length'] as num).toDouble() : null,
+      width: map['width'] != null ? (map['width'] as num).toDouble() : null,
+      height: map['height'] != null ? (map['height'] as num).toDouble() : null,
+      sku: map['sku'],
+      tags: List<String>.from(map['tags'] ?? []),
+      warranty: map['warranty'],
+      originCountry: map['originCountry'],
     );
   }
 

@@ -51,20 +51,22 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB5vPtF80YreLTjnxj2DYuQ9gyZVR3f-Yk',
-    appId: '1:93624205799:android:4f7a852b5712018ab53d42',
+    appId: '1:93624205799:android:5f77b758f585208fb53d42',
     messagingSenderId: '93624205799',
     projectId: 'baby-shop-hub-a04d1',
+    databaseURL: 'https://baby-shop-hub-a04d1-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'baby-shop-hub-a04d1.firebasestorage.app',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCx7LoQOJBFcfTGZTJzrwtZ028l9OjaxRg',
-    appId: '1:93624205799:web:cd5a038ca39aefe0b53d42',
+    appId: '1:93624205799:web:0ae34408276fd2bfb53d42',
     messagingSenderId: '93624205799',
     projectId: 'baby-shop-hub-a04d1',
     authDomain: 'baby-shop-hub-a04d1.firebaseapp.com',
+    databaseURL: 'https://baby-shop-hub-a04d1-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'baby-shop-hub-a04d1.firebasestorage.app',
-    measurementId: 'G-5CXTFKV63L',
+    measurementId: 'G-MCFEH1ZVB9',
   );
 
 }

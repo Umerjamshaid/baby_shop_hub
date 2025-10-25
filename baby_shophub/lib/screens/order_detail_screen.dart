@@ -7,6 +7,7 @@ import '../services/order_service.dart';
 import '../models/order_model.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/common/loading_widget.dart';
+import 'order_tracking_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Order order;
@@ -20,17 +21,36 @@ class OrderDetailScreen extends StatefulWidget {
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final OrderService _orderService = OrderService();
   bool _isLoading = false;
+  late Order _currentOrder;
+  Stream<Order?>? _orderStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentOrder = widget.order;
+    _orderStream = _orderService.listenToOrderUpdates(widget.order.id);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Order #${widget.order.id.substring(widget.order.id.length - 6)}'),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const AppLoadingWidget()
-          : _buildOrderDetails(),
+    return StreamBuilder<Order?>(
+      stream: _orderStream,
+      initialData: _currentOrder,
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          _currentOrder = snapshot.data!;
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              'Order #${_currentOrder.id.substring(_currentOrder.id.length - 6)}',
+            ),
+            centerTitle: true,
+          ),
+          body: _isLoading ? const AppLoadingWidget() : _buildOrderDetails(),
+        );
+      },
     );
   }
 
@@ -56,6 +76,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           _buildOrderSummary(),
           const SizedBox(height: 24),
 
+          // Track Order Button
+          _buildTrackOrderButton(),
+          const SizedBox(height: 16),
+
           // Actions
           if (widget.order.canCancel || widget.order.canReorder)
             _buildActionButtons(),
@@ -80,8 +104,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             _buildStatusTimeline(),
             const SizedBox(height: 16),
             // Tracking Info
-            if (widget.order.trackingNumber != null)
-              _buildTrackingInfo(),
+            if (widget.order.trackingNumber != null) _buildTrackingInfo(),
           ],
         ),
       ),
@@ -94,7 +117,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       'Confirmed',
       'Processing',
       'Shipped',
-      'Delivered'
+      'Delivered',
     ];
 
     final currentStatusIndex = statuses.indexOf(widget.order.status);
@@ -138,7 +161,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               color: isCompleted ? Colors.green : Colors.grey,
             ),
           ),
-          trailing: isCurrent ? const Icon(Icons.arrow_forward, size: 16) : null,
+          trailing: isCurrent
+              ? const Icon(Icons.arrow_forward, size: 16)
+              : null,
         );
       }).toList(),
     );
@@ -192,50 +217,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            ...widget.order.items.map((item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  // Product Image
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: NetworkImage(item.productImage),
-                        fit: BoxFit.cover,
+            ...widget.order.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    // Product Image
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: NetworkImage(item.productImage),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Product Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.productName,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Qty: ${item.quantity}',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                    const SizedBox(width: 12),
+                    // Product Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.productName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Qty: ${item.quantity}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  // Price
-                  Text(
-                    item.formattedTotalPrice,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+                    // Price
+                    Text(
+                      item.formattedTotalPrice,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -280,7 +307,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Subtotal', '\$${widget.order.totalAmount.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+              'Subtotal',
+              '\$${widget.order.totalAmount.toStringAsFixed(2)}',
+            ),
             _buildSummaryRow('Shipping', 'Free'),
             _buildSummaryRow('Tax', '\$0.00'),
             const Divider(),
@@ -332,6 +362,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  Widget _buildTrackOrderButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderTrackingScreen(order: widget.order),
+            ),
+          );
+        },
+        icon: const Icon(Icons.track_changes),
+        label: const Text('Track Order'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          backgroundColor: Colors.blue,
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -347,10 +399,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           const SizedBox(width: 12),
         if (widget.order.canReorder)
           Expanded(
-            child: AppButton(
-              onPressed: _reorder,
-              text: 'Reorder',
-            ),
+            child: AppButton(onPressed: _reorder, text: 'Reorder'),
           ),
       ],
     );
@@ -387,9 +436,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         );
         Navigator.pop(context); // Go back to orders list
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to cancel order: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to cancel order: $e')));
       } finally {
         setState(() {
           _isLoading = false;
@@ -417,9 +466,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         Navigator.pop(context); // Go back to orders list
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to reorder: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to reorder: $e')));
     } finally {
       setState(() {
         _isLoading = false;

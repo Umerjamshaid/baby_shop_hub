@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 
 import '../models/order_model.dart';
 import '../utils/constants.dart';
+import '../services/notification_service.dart';
 
 class OrderService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -44,8 +45,9 @@ class OrderService {
           .where('userId', isEqualTo: userId)
           .get();
 
-      final orders =
-      snapshot.docs.map((doc) => Order.fromMap(doc.data())).toList();
+      final orders = snapshot.docs
+          .map((doc) => Order.fromMap(doc.data()))
+          .toList();
 
       orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
       return orders;
@@ -56,11 +58,11 @@ class OrderService {
 
   // 🔹 Update order status
   Future<void> updateOrderStatus(
-      String orderId,
-      String status, {
-        String? message,
-        String? userId,
-      }) async {
+    String orderId,
+    String status, {
+    String? message,
+    String? userId,
+  }) async {
     try {
       final update = OrderStatusUpdate(
         status: status,
@@ -72,9 +74,9 @@ class OrderService {
           .collection(AppConstants.ordersCollection)
           .doc(orderId)
           .update({
-        'status': status,
-        'statusUpdates': FieldValue.arrayUnion([update.toMap()]),
-      });
+            'status': status,
+            'statusUpdates': FieldValue.arrayUnion([update.toMap()]),
+          });
 
       // If delivered, set delivery date
       if (status == 'Delivered') {
@@ -84,13 +86,13 @@ class OrderService {
             .update({'deliveryDate': DateTime.now().toIso8601String()});
       }
 
-      // ✅ Notify user about status change
+      // ✅ Notify user about status change with enhanced notifications
       if (userId != null) {
-        final statusMessage = _getStatusMessage(status);
-        await _sendNotification(
-          title: 'Order Status Updated',
-          body: 'Your order #$orderId is now $statusMessage',
-          topic: 'order_$userId',
+        final notificationService = NotificationService();
+        await notificationService.sendOrderStatusNotification(
+          userId: userId,
+          orderId: orderId,
+          status: status,
         );
       }
     } catch (e) {
@@ -114,6 +116,15 @@ class OrderService {
       default:
         return status.toLowerCase();
     }
+  }
+
+  // 🔹 Send delivery notification
+  Future<void> sendDeliveryNotification(String orderId, String userId) async {
+    final notificationService = NotificationService();
+    await notificationService.sendDeliveryNotification(
+      userId: userId,
+      orderId: orderId,
+    );
   }
 
   // 🔹 Send notification (stub – should be via Cloud Functions in real apps)
@@ -172,20 +183,20 @@ class OrderService {
 
   // 🔹 Add tracking information
   Future<void> addTrackingInfo(
-      String orderId,
-      String trackingNumber,
-      String carrier, {
-        String? userId,
-      }) async {
+    String orderId,
+    String trackingNumber,
+    String carrier, {
+    String? userId,
+  }) async {
     try {
       await _firestore
           .collection(AppConstants.ordersCollection)
           .doc(orderId)
           .update({
-        'trackingNumber': trackingNumber,
-        'carrier': carrier,
-        'status': 'Shipped',
-      });
+            'trackingNumber': trackingNumber,
+            'carrier': carrier,
+            'status': 'Shipped',
+          });
 
       await updateOrderStatus(
         orderId,
@@ -193,6 +204,18 @@ class OrderService {
         message: 'Order shipped with tracking number: $trackingNumber',
         userId: userId,
       );
+
+      // Send shipment tracking notification
+      if (userId != null) {
+        final notificationService = NotificationService();
+        await notificationService.sendShipmentTrackingNotification(
+          userId: userId,
+          orderId: orderId,
+          trackingNumber: trackingNumber,
+          carrier: carrier,
+          status: 'Shipped',
+        );
+      }
     } catch (e) {
       throw Exception('Failed to add tracking info: $e');
     }
@@ -221,5 +244,42 @@ class OrderService {
     } catch (e) {
       throw Exception('Failed to reorder: $e');
     }
+  }
+
+  // 🔹 Listen for real-time order updates
+  Stream<Order?> listenToOrderUpdates(String orderId) {
+    return _firestore
+        .collection(AppConstants.ordersCollection)
+        .doc(orderId)
+        .snapshots()
+        .map((snapshot) {
+          if (snapshot.exists) {
+            return Order.fromMap(snapshot.data() as Map<String, dynamic>);
+          }
+          return null;
+        });
+  }
+
+  // 🔹 Listen for user orders updates
+  Stream<List<Order>> listenToUserOrders(String userId) {
+    return _firestore
+        .collection(AppConstants.ordersCollection)
+        .where('userId', isEqualTo: userId)
+        .orderBy('orderDate', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => Order.fromMap(doc.data())).toList();
+        });
+  }
+
+  // 🔹 Listen for all orders (admin)
+  Stream<List<Order>> listenToAllOrders() {
+    return _firestore
+        .collection(AppConstants.ordersCollection)
+        .orderBy('orderDate', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => Order.fromMap(doc.data())).toList();
+        });
   }
 }

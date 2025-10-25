@@ -32,8 +32,9 @@ class ProductService {
           .get();
 
       if (oldProductDoc.exists) {
-        final oldProduct =
-        Product.fromMap(oldProductDoc.data() as Map<String, dynamic>);
+        final oldProduct = Product.fromMap(
+          oldProductDoc.data() as Map<String, dynamic>,
+        );
 
         // If category changed, update both old and new category counts
         if (oldProduct.category != product.category) {
@@ -61,8 +62,9 @@ class ProductService {
           .get();
 
       if (productDoc.exists) {
-        final product =
-        Product.fromMap(productDoc.data() as Map<String, dynamic>);
+        final product = Product.fromMap(
+          productDoc.data() as Map<String, dynamic>,
+        );
 
         // Delete the product
         await _firestore
@@ -101,8 +103,9 @@ class ProductService {
         await categoryDoc.reference.update({'productCount': productCount});
       } else {
         // ✅ Create category if it doesn’t exist
-        final newCategoryRef =
-        _firestore.collection(AppConstants.categoriesCollection).doc();
+        final newCategoryRef = _firestore
+            .collection(AppConstants.categoriesCollection)
+            .doc();
 
         await newCategoryRef.set({
           'id': newCategoryRef.id,
@@ -128,14 +131,17 @@ class ProductService {
           query = query.where('category', isEqualTo: filters.category);
         }
         if (filters.minPrice > 0 || filters.maxPrice < 1000) {
-          query = query.where('price',
-              isGreaterThanOrEqualTo: filters.minPrice);
-          query =
-              query.where('price', isLessThanOrEqualTo: filters.maxPrice);
+          query = query.where(
+            'price',
+            isGreaterThanOrEqualTo: filters.minPrice,
+          );
+          query = query.where('price', isLessThanOrEqualTo: filters.maxPrice);
         }
         if (filters.minRating > 0) {
-          query = query.where('rating',
-              isGreaterThanOrEqualTo: filters.minRating);
+          query = query.where(
+            'rating',
+            isGreaterThanOrEqualTo: filters.minRating,
+          );
         }
         if (filters.brands.isNotEmpty) {
           query = query.where('brand', whereIn: filters.brands);
@@ -177,8 +183,9 @@ class ProductService {
   // ✅ Backwards compatibility: simple get all products
   Future<List<Product>> getAllProducts() async {
     try {
-      QuerySnapshot snapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      QuerySnapshot snapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       return snapshot.docs
           .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
@@ -243,9 +250,7 @@ class ProductService {
       final allProducts = await getAllProducts();
       return allProducts.where((product) {
         return product.name.toLowerCase().contains(query.toLowerCase()) ||
-            product.description
-                .toLowerCase()
-                .contains(query.toLowerCase()) ||
+            product.description.toLowerCase().contains(query.toLowerCase()) ||
             product.category.toLowerCase().contains(query.toLowerCase()) ||
             product.brand.toLowerCase().contains(query.toLowerCase());
       }).toList();
@@ -256,33 +261,35 @@ class ProductService {
 
   // ✅ Client-side filters
   List<Product> _applyClientSideFilters(
-      List<Product> products, SearchFilters filters) {
+    List<Product> products,
+    SearchFilters filters,
+  ) {
     var filteredProducts = products;
 
     if (filters.query.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
-        return product.name.toLowerCase().contains(filters.query.toLowerCase()) ||
-            product.description
-                .toLowerCase()
-                .contains(filters.query.toLowerCase()) ||
+        return product.name.toLowerCase().contains(
+              filters.query.toLowerCase(),
+            ) ||
+            product.description.toLowerCase().contains(
+              filters.query.toLowerCase(),
+            ) ||
             product.brand.toLowerCase().contains(filters.query.toLowerCase()) ||
-            product.category
-                .toLowerCase()
-                .contains(filters.query.toLowerCase());
+            product.category.toLowerCase().contains(
+              filters.query.toLowerCase(),
+            );
       }).toList();
     }
 
     if (filters.sizes.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
-        return product.sizes != null &&
-            product.sizes!.any((size) => filters.sizes.contains(size));
+        return product.sizes.any((size) => filters.sizes.contains(size));
       }).toList();
     }
 
     if (filters.colors.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
-        return product.colors != null &&
-            product.colors!.any((color) => filters.colors.contains(color));
+        return product.colors.any((color) => filters.colors.contains(color));
       }).toList();
     }
 
@@ -309,7 +316,8 @@ class ProductService {
         break;
       case 'discount':
         products.sort(
-                (a, b) => b.discountPercentage.compareTo(a.discountPercentage));
+          (a, b) => b.discountPercentage.compareTo(a.discountPercentage),
+        );
         break;
       default:
         break;
@@ -320,8 +328,9 @@ class ProductService {
   // ✅ Unique brands
   Future<List<String>> getBrands() async {
     try {
-      QuerySnapshot snapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      QuerySnapshot snapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       Set<String> brands = {};
       for (var doc in snapshot.docs) {
@@ -338,8 +347,9 @@ class ProductService {
   // ✅ Unique age ranges
   Future<List<String>> getAgeRanges() async {
     try {
-      QuerySnapshot snapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      QuerySnapshot snapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       Set<String> ageRanges = {};
       for (var doc in snapshot.docs) {
@@ -356,8 +366,9 @@ class ProductService {
   // ✅ Unique sizes
   Future<List<String>> getSizes() async {
     try {
-      QuerySnapshot snapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      QuerySnapshot snapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       Set<String> sizes = {};
       for (var doc in snapshot.docs) {
@@ -379,8 +390,9 @@ class ProductService {
   // ✅ Unique colors
   Future<List<String>> getColors() async {
     try {
-      QuerySnapshot snapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      QuerySnapshot snapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       Set<String> colors = {};
       for (var doc in snapshot.docs) {

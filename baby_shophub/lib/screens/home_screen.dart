@@ -26,7 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeContent(),
-    const ProductsListScreen(),
+    ProductsListScreen(
+      category: 'All',
+    ), // Pass 'All' category to ensure proper loading
     const CartScreen(),
     const ProfileScreen(),
     const OrdersScreen(),
@@ -247,32 +249,90 @@ class AdvancedSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    if (query.isEmpty) {
+      return _buildPopularSearches(context);
+    }
+
+    // Debounce search suggestions to avoid too many API calls
     return FutureBuilder<List<String>>(
-      future: Provider.of<ProductProvider>(
-        context,
-        listen: false,
-      ).getSearchSuggestions(query),
+      future: Future.delayed(
+        const Duration(milliseconds: 300),
+        () => Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        ).getSearchSuggestions(query),
+      ),
       builder: (context, snapshot) {
-        if (query.isEmpty) {
-          return _buildPopularSearches(context);
-        }
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Searching...', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
         }
         if (snapshot.hasError || snapshot.data == null) {
           return const Center(child: Text('Error loading suggestions'));
         }
         final suggestions = snapshot.data!;
         if (suggestions.isEmpty) {
-          return const Center(child: Text('No suggestions found'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  'No suggestions for "$query"',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
         }
         return ListView.builder(
           itemCount: suggestions.length,
           itemBuilder: (context, index) {
             final suggestion = suggestions[index];
             return ListTile(
-              leading: const Icon(Icons.search),
-              title: Text(suggestion),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.search,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                suggestion,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle:
+                  query.isNotEmpty &&
+                      suggestion.toLowerCase().contains(query.toLowerCase())
+                  ? Text(
+                      'Contains: "$query"',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    )
+                  : null,
+              trailing: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                onPressed: () {
+                  query = suggestion;
+                  showResults(context);
+                },
+              ),
               onTap: () {
                 query = suggestion;
                 showResults(context);

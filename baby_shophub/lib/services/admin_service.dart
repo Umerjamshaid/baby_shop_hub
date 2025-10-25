@@ -15,11 +15,11 @@ class AdminService {
   // ========================= USERS =========================
   Future<List<UserModel>> getAllUsers() async {
     try {
-      final snapshot = await _firestore.collection(AppConstants.usersCollection).get();
+      final snapshot = await _firestore
+          .collection(AppConstants.usersCollection)
+          .get();
 
-      return snapshot.docs
-          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      return snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList();
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         throw Exception('Admin permissions required to fetch users.');
@@ -27,6 +27,53 @@ class AdminService {
       throw Exception('Failed to fetch users: ${e.message}');
     } catch (e) {
       throw Exception('Failed to fetch users: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getUsersPaginated({
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection(AppConstants.usersCollection)
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.get();
+
+      final users = snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      return {
+        'users': users,
+        'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        throw Exception('Admin permissions required to fetch users.');
+      }
+      throw Exception('Failed to fetch users: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to fetch users: $e');
+    }
+  }
+
+  Future<void> deleteUser(String userId) async {
+    try {
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(userId)
+          .delete();
+    } on FirebaseException catch (e) {
+      throw Exception('Failed to delete user: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to delete user: $e');
     }
   }
 
@@ -38,12 +85,12 @@ class AdminService {
           .orderBy('orderDate', descending: true)
           .get();
 
-      return snapshot.docs
-          .map((doc) => Order.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      return snapshot.docs.map((doc) => Order.fromMap(doc.data())).toList();
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
-        throw Exception('Admin permissions required. Please check Firestore rules.');
+        throw Exception(
+          'Admin permissions required. Please check Firestore rules.',
+        );
       }
       throw Exception('Failed to fetch orders: ${e.message}');
     } catch (e) {
@@ -53,7 +100,9 @@ class AdminService {
 
   Future<void> updateOrderStatus(String orderId, String status) async {
     try {
-      final orderRef = _firestore.collection(AppConstants.ordersCollection).doc(orderId);
+      final orderRef = _firestore
+          .collection(AppConstants.ordersCollection)
+          .doc(orderId);
 
       final update = {
         'status': status,
@@ -64,7 +113,7 @@ class AdminService {
       final batch = _firestore.batch();
       batch.update(orderRef, {'status': status});
       batch.update(orderRef, {
-        'statusUpdates': FieldValue.arrayUnion([update])
+        'statusUpdates': FieldValue.arrayUnion([update]),
       });
       await batch.commit();
     } on FirebaseException catch (e) {
@@ -74,9 +123,15 @@ class AdminService {
     }
   }
 
-  Future<void> addTrackingInfo(String orderId, String trackingNumber, String carrier) async {
+  Future<void> addTrackingInfo(
+    String orderId,
+    String trackingNumber,
+    String carrier,
+  ) async {
     try {
-      final orderRef = _firestore.collection(AppConstants.ordersCollection).doc(orderId);
+      final orderRef = _firestore
+          .collection(AppConstants.ordersCollection)
+          .doc(orderId);
 
       final batch = _firestore.batch();
       batch.update(orderRef, {
@@ -90,8 +145,8 @@ class AdminService {
             'status': 'Shipped',
             'timestamp': DateTime.now().toIso8601String(),
             'message': 'Tracking info added by admin',
-          }
-        ])
+          },
+        ]),
       });
       await batch.commit();
     } on FirebaseException catch (e) {
@@ -104,9 +159,15 @@ class AdminService {
   // ========================= DASHBOARD =========================
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
-      final usersSnapshot = await _firestore.collection(AppConstants.usersCollection).get();
-      final ordersSnapshot = await _firestore.collection(AppConstants.ordersCollection).get();
-      final productsSnapshot = await _firestore.collection(AppConstants.productsCollection).get();
+      final usersSnapshot = await _firestore
+          .collection(AppConstants.usersCollection)
+          .get();
+      final ordersSnapshot = await _firestore
+          .collection(AppConstants.ordersCollection)
+          .get();
+      final productsSnapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       double totalSales = 0;
       int totalOrders = 0;
@@ -117,7 +178,8 @@ class AdminService {
         final orderStatus = orderData['status']?.toString() ?? 'Pending';
 
         if (orderStatus == 'Delivered') {
-          final orderAmount = (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          final orderAmount =
+              (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
           totalSales += orderAmount;
           completedOrders++;
         }
@@ -133,6 +195,9 @@ class AdminService {
         'completedOrders': completedOrders,
         'totalSales': totalSales,
         'popularProducts': popularProducts,
+        'usersRaw': usersSnapshot.docs
+            .map((d) => UserModel.fromMap(d.data()))
+            .toList(),
       };
     } catch (e) {
       throw Exception('Failed to fetch dashboard stats: $e');
@@ -141,7 +206,9 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> _getPopularProducts() async {
     try {
-      final ordersSnapshot = await _firestore.collection(AppConstants.ordersCollection).get();
+      final ordersSnapshot = await _firestore
+          .collection(AppConstants.ordersCollection)
+          .get();
 
       final productCounts = <String, int>{};
       final productDetails = <String, Product>{};
@@ -155,13 +222,16 @@ class AdminService {
           final productId = item['productId']?.toString() ?? '';
           if (productId.isNotEmpty) {
             final quantity = (item['quantity'] as num?)?.toInt() ?? 0;
-            productCounts[productId] = (productCounts[productId] ?? 0) + quantity;
+            productCounts[productId] =
+                (productCounts[productId] ?? 0) + quantity;
           }
         }
       }
 
       // Get product details
-      final productsSnapshot = await _firestore.collection(AppConstants.productsCollection).get();
+      final productsSnapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
       for (var doc in productsSnapshot.docs) {
         final productData = doc.data();
@@ -170,19 +240,25 @@ class AdminService {
       }
 
       // Create sorted list of popular products
-      final popularProducts = productCounts.entries.map((entry) {
-        final product = productDetails[entry.key];
-        if (product != null) {
-          return {
-            'product': product,
-            'count': entry.value,
-            'revenue': (product.price) * entry.value,
-          };
-        }
-        return null;
-      }).where((item) => item != null).cast<Map<String, dynamic>>().toList();
+      final popularProducts = productCounts.entries
+          .map((entry) {
+            final product = productDetails[entry.key];
+            if (product != null) {
+              return {
+                'product': product,
+                'count': entry.value,
+                'revenue': (product.price) * entry.value,
+              };
+            }
+            return null;
+          })
+          .where((item) => item != null)
+          .cast<Map<String, dynamic>>()
+          .toList();
 
-      popularProducts.sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+      popularProducts.sort(
+        (a, b) => (b['count'] as int).compareTo(a['count'] as int),
+      );
 
       return popularProducts.take(5).toList();
     } catch (e) {
@@ -193,7 +269,10 @@ class AdminService {
   // ========================= PRODUCTS =========================
   Future<void> createProduct(Product product) async {
     try {
-      await _firestore.collection(AppConstants.productsCollection).doc(product.id).set(product.toMap());
+      await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(product.id)
+          .set(product.toMap());
     } on FirebaseException catch (e) {
       throw Exception('Failed to create product: ${e.message}');
     } catch (e) {
@@ -203,7 +282,10 @@ class AdminService {
 
   Future<void> updateProduct(Product product) async {
     try {
-      await _firestore.collection(AppConstants.productsCollection).doc(product.id).update(product.toMap());
+      await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(product.id)
+          .update(product.toMap());
     } on FirebaseException catch (e) {
       throw Exception('Failed to update product: ${e.message}');
     } catch (e) {
@@ -213,7 +295,10 @@ class AdminService {
 
   Future<void> deleteProduct(String productId) async {
     try {
-      await _firestore.collection(AppConstants.productsCollection).doc(productId).delete();
+      await _firestore
+          .collection(AppConstants.productsCollection)
+          .doc(productId)
+          .delete();
     } on FirebaseException catch (e) {
       if (e.code == 'not-found') {
         throw Exception('Product not found.');
@@ -265,6 +350,41 @@ class AdminService {
       throw Exception('Failed to update user role: ${e.message}');
     } catch (e) {
       throw Exception('Failed to update user role: $e');
+    }
+  }
+
+  // ========================= REFUNDS =========================
+  Future<void> processRefund(
+    String orderId,
+    double amount,
+    String reason,
+  ) async {
+    try {
+      final orderRef = _firestore
+          .collection(AppConstants.ordersCollection)
+          .doc(orderId);
+
+      final batch = _firestore.batch();
+      batch.update(orderRef, {
+        'status': 'Refunded',
+        'refundAmount': amount,
+        'refundReason': reason,
+        'refundDate': DateTime.now().toIso8601String(),
+      });
+      batch.update(orderRef, {
+        'statusUpdates': FieldValue.arrayUnion([
+          {
+            'status': 'Refunded',
+            'timestamp': DateTime.now().toIso8601String(),
+            'message': 'Refund processed: $reason',
+          },
+        ]),
+      });
+      await batch.commit();
+    } on FirebaseException catch (e) {
+      throw Exception('Failed to process refund: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to process refund: $e');
     }
   }
 }

@@ -82,12 +82,11 @@ class CategoryService {
       final categories = await getAllCategories();
 
       // Get all products once
-      final productsSnapshot =
-      await _firestore.collection(AppConstants.productsCollection).get();
+      final productsSnapshot = await _firestore
+          .collection(AppConstants.productsCollection)
+          .get();
 
-      final products = productsSnapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
+      final products = productsSnapshot.docs.map((doc) => doc.data()).toList();
 
       // Return updated categories using copyWith
       final updatedCategories = categories.map((category) {
