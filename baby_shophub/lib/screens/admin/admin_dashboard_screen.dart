@@ -1643,7 +1643,16 @@ Drawer _buildDrawer(BuildContext context) {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              onTap: () => _logout(),
+              onTap: () {
+                final auth = context.read<AuthProvider>();
+                auth.signOut().then((_) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                    (_) => false,
+                  );
+                });
+              },
             ),
           ),
         ],
