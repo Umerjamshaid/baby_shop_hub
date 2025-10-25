@@ -89,12 +89,20 @@ BabyShopHub is a cutting-edge Flutter-based e-commerce mobile application design
 - **Connectivity**: Offline detection and sync capabilities
 
 ### 👨‍💼 Admin Panel
-- **Dashboard Analytics**: Sales, users, and product insights
-- **Product Management**: Add, edit, and remove products
-- **Order Processing**: Manage orders and update statuses
-- **User Management**: View and manage user accounts
-- **Category Management**: Organize products efficiently
-- **Reports**: Generate sales and performance reports
+- **Dashboard Analytics**: Sales, users, and product insights with real-time charts
+- **Enhanced Product Management**: Advanced product CRUD operations with bulk actions
+- **Advanced Analytics**: Detailed business intelligence with custom metrics
+- **Order Processing**: Manage orders and update statuses with tracking
+- **User Management**: View and manage user accounts with role-based access
+- **Category Management**: Organize products efficiently with drag-and-drop
+- **Reports**: Generate comprehensive sales and performance reports
+- **Data Export/Import**: Bulk data operations with CSV support
+- **Admin Settings**: System configuration and preferences
+- **Notification Management**: Push notification campaigns and templates
+- **Order Tracking**: Real-time order status updates and logistics
+- **Payment Management**: Payment processing and transaction history
+- **Reviews Analytics**: Customer feedback analysis and moderation
+- **Notification Settings**: Granular notification preferences
 
 ## 🚀 Installation & Setup
 
@@ -248,6 +256,65 @@ flutter build appbundle --release
 # iOS (on macOS)
 flutter build ios --release
 ```
+
+### GitHub Actions for APK Releases
+To automate APK builds and releases, set up GitHub Actions:
+
+1. **Create Workflow File**: Create `.github/workflows/build-apk.yml` in your repository root:
+
+```yaml
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.8.1'
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Build APK
+      run: flutter build apk --release
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: build/app/outputs/flutter-apk/app-release.apk
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+2. **Configure Signing (Optional but Recommended)**:
+   - For production builds, configure code signing
+   - Add keystore file to repository secrets
+   - Update build.gradle.kts with signing config
+
+3. **Trigger the Workflow**:
+   - Push a version tag: `git tag v1.0.0 && git push origin v1.0.0`
+   - Or trigger manually from GitHub Actions tab
+
 *Ensure you have set up appropriate signing configurations for release builds.*
 
 ## 📖 Usage
@@ -258,6 +325,14 @@ flutter build ios --release
 // final cartProvider = Provider.of<CartProvider>(context, listen: false);
 // await cartProvider.addToCart(product, quantity: 1);
 ```
+
+### For Admins
+- Access admin panel through login screen
+- Use dashboard for real-time analytics and insights
+- Manage products with enhanced CRUD operations
+- Process orders and update tracking status
+- Export data in CSV format for reporting
+- Configure system settings and notifications
 
 ### For Developers
 - Follow Flutter's [style guide](https://flutter.dev/docs/development/tools/formatting) and [Effective Dart](https://dart.dev/guides/language/effective-dart) guidelines.
@@ -270,6 +345,10 @@ flutter build ios --release
 // Firebase Firestore integration (assuming ProductService is implemented)
 // final productService = ProductService();
 // final products = await productService.getProductsByCategory('diapers');
+
+// Admin service example
+// final adminService = AdminService();
+// final stats = await adminService.getDashboardStats();
 ```
 
 ## 📊 Project Structure
@@ -470,6 +549,15 @@ A: Flutter 3.8.1 or higher. Check `flutter --version`.
 ## 🗺️ Roadmap
 
 ### Version 1.1.0 (Q2 2024)
+- [x] Enhanced Product Management with bulk operations
+- [x] Advanced Analytics Dashboard with custom metrics
+- [x] Data Export/Import functionality
+- [x] Admin Settings and system configuration
+- [x] Notification Management system
+- [x] Order Tracking enhancements
+- [x] Payment Management integration
+- [x] Reviews Analytics and moderation
+- [x] Notification Settings customization
 - [ ] Payment gateway integration (e.g., Stripe, Razorpay)
 - [ ] Advanced search filters (size, color, brand variations)
 - [ ] Wishlist sharing via social media/link

@@ -7,14 +7,9 @@ import 'package:baby_shophub/screens/admin/admin_edit_product_screen.dart';
 import 'package:baby_shophub/screens/admin/admin_login_screen.dart';
 import 'package:baby_shophub/screens/admin/admin_orders_screen.dart';
 import 'package:baby_shophub/screens/admin/admin_products_screen.dart';
-import 'package:baby_shophub/screens/admin/enhanced_product_management_screen.dart';
 import 'package:baby_shophub/screens/admin/admin_users_screen.dart';
 import 'package:baby_shophub/screens/admin/categories_screen.dart';
 import 'package:baby_shophub/screens/admin/notification_management_screen.dart';
-import 'package:baby_shophub/screens/admin/advanced_analytics_screen.dart';
-import 'package:baby_shophub/screens/admin/admin_settings_screen.dart';
-import 'package:baby_shophub/screens/admin/data_export_import_screen.dart';
-import 'package:baby_shophub/screens/admin/reports_screen.dart';
 import 'package:baby_shophub/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -326,467 +321,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           behavior: SnackBarBehavior.floating,
         ),
       );
-    }
-  }
-
-  Drawer _buildDrawer(BuildContext context) {
-    final menuItems = [
-      {
-        'icon': Icons.dashboard,
-        'title': 'Dashboard',
-        'color': AppColors.primary,
-        'subtitle': 'Overview & Stats',
-      },
-      {
-        'icon': Icons.inventory,
-        'title': 'Products',
-        'color': AppColors.success,
-        'subtitle': 'Manage Inventory',
-      },
-      {
-        'icon': Icons.add_box,
-        'title': 'Add Product',
-        'color': AppColors.success,
-        'subtitle': 'Create New Items',
-      },
-      {
-        'icon': Icons.category,
-        'title': 'Categories',
-        'color': AppColors.warning,
-        'subtitle': 'Organize Products',
-      },
-      {
-        'icon': Icons.shopping_cart,
-        'title': 'Orders',
-        'color': AppColors.secondary,
-        'subtitle': 'Order Management',
-      },
-      {
-        'icon': Icons.people,
-        'title': 'Users',
-        'color': AppColors.primary,
-        'subtitle': 'Customer Accounts',
-      },
-      {
-        'icon': Icons.notifications,
-        'title': 'Notifications',
-        'color': AppColors.warning,
-        'subtitle': 'Message Center',
-      },
-      {
-        'icon': Icons.analytics,
-        'title': 'Analytics',
-        'color': AppColors.primary,
-        'subtitle': 'Advanced Insights',
-      },
-      {
-        'icon': Icons.settings,
-        'title': 'Settings',
-        'color': AppColors.secondary,
-        'subtitle': 'System Configuration',
-      },
-      {
-        'icon': Icons.people,
-        'title': 'User Management',
-        'color': AppColors.primary,
-        'subtitle': 'Manage Users',
-      },
-      {
-        'icon': Icons.inventory,
-        'title': 'Enhanced Product Management',
-        'color': AppColors.success,
-        'subtitle': 'Advanced Product Control',
-      },
-      {
-        'icon': Icons.import_export,
-        'title': 'Data Export/Import',
-        'color': AppColors.warning,
-        'subtitle': 'Manage Data',
-      },
-      {
-        'icon': Icons.receipt_long,
-        'title': 'Order Management',
-        'color': AppColors.secondary,
-        'subtitle': 'Handle Orders',
-      },
-      {
-        'icon': Icons.bar_chart,
-        'title': 'Reports',
-        'color': AppColors.primary,
-        'subtitle': 'Custom Reports',
-      },
-    ];
-
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.85,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              AppColors.primaryDark,
-              Color(0xFF818CF8),
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: Column(
-          children: [
-            // Enhanced Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.15),
-                    Colors.white.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings,
-                      size: 36,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Admin Panel',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Comprehensive Dashboard Control',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified,
-                          color: Colors.green[300],
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'System Online',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Menu Items
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  const SizedBox(height: 10),
-                  ...menuItems.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () => _handleMenuTap(context, index),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    item['icon'] as IconData,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['title'] as String,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        item['subtitle'] as String,
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-
-            // Logout Section
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    child: const Divider(color: Colors.white30, thickness: 1),
-                  ),
-                  const SizedBox(height: 16),
-                  Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => _logout(),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.error.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.exit_to_app,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Logout',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    'Sign out of admin panel',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.logout,
-                              color: Colors.white.withValues(alpha: 0.7),
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleMenuTap(BuildContext context, int index) {
-    Navigator.pop(context);
-    switch (index) {
-      case 0:
-        break; // dashboard
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const EnhancedProductManagementScreen(),
-          ),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AdminEditProductScreen(onProductSaved: () {}),
-          ),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CategoriesScreen()),
-        );
-        break;
-      case 4:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
-        );
-        break;
-      case 5:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
-        );
-        break;
-      case 6:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const NotificationManagementScreen(),
-          ),
-        );
-        break;
-      case 7:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdvancedAnalyticsScreen()),
-        );
-        break;
-      case 8:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminSettingsScreen()),
-        );
-        break;
-      case 9:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
-        );
-        break;
-      case 10:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EnhancedProductManagementScreen()),
-        );
-        break;
-      case 11:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DataExportImportScreen()),
-        );
-        break;
-      case 12:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
-        );
-        break;
-      case 13:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ReportsScreen()),
-        );
-        break;
     }
   }
 }
@@ -1970,6 +1504,198 @@ class _WavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/* -------------  drawer  ------------- */
+Drawer _buildDrawer(BuildContext context) {
+  final menuItems = [
+    {'icon': Icons.dashboard, 'title': 'Dashboard', 'color': AppColors.primary},
+    {'icon': Icons.inventory, 'title': 'Products', 'color': AppColors.success},
+    {'icon': Icons.add_box, 'title': 'Add Product', 'color': AppColors.success},
+    {'icon': Icons.category, 'title': 'Categories', 'color': AppColors.warning},
+    {
+      'icon': Icons.shopping_cart,
+      'title': 'Orders',
+      'color': AppColors.secondary,
+    },
+    {'icon': Icons.people, 'title': 'Users', 'color': AppColors.primary},
+    {
+      'icon': Icons.notifications,
+      'title': 'Notifications',
+      'color': AppColors.warning,
+    },
+  ];
+
+  return Drawer(
+    child: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, Color(0xFF818CF8)],
+        ),
+      ),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Colors.transparent),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.admin_panel_settings,
+                    size: 32,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Admin Panel',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Dashboard Control Center',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: .8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...menuItems.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    item['icon'] as IconData,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                title: Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onTap: () => _handleMenuTap(context, index),
+              ),
+            );
+          }),
+          const SizedBox(height: 20),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: const Divider(color: Colors.white54),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: .2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.exit_to_app,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              title: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onTap: () => _logout(),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _handleMenuTap(BuildContext context, int index) {
+  Navigator.pop(context);
+  switch (index) {
+    case 0:
+      break; // dashboard
+    case 1:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminProductsScreen()),
+      );
+      break;
+    case 2:
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminEditProductScreen(onProductSaved: () {}),
+        ),
+      );
+      break;
+    case 3:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+      );
+      break;
+    case 4:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
+      );
+      break;
+    case 5:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
+      );
+      break;
+    case 6:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const NotificationManagementScreen()),
+      );
+      break;
+  }
 }
 
 /* -------------  line chart painter  ------------- */
