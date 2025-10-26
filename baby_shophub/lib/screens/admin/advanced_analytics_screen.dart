@@ -393,7 +393,7 @@ class _AdvancedAnalyticsScreenState extends State<AdvancedAnalyticsScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Revenue Trend (${_selectedTimeRange})',
+                'Revenue Trend ($_selectedTimeRange)',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -494,12 +494,16 @@ class _AdvancedAnalyticsScreenState extends State<AdvancedAnalyticsScreen>
                     id: entry.key,
                     name: 'Unknown Product',
                     description: '',
-                    price: 0,
+                    price: 0.0,
+                    unit: 'item',
+                    taxRate: 0.0,
                     category: 'Unknown',
+                    stockQuantity: 0,
+                    isService: false,
+                    isActive: true,
                     brand: 'Unknown',
                     ageRange: 'Unknown',
                     imageUrls: [],
-                    stock: 0,
                     isFeatured: false,
                     createdAt: DateTime.now(),
                   ),

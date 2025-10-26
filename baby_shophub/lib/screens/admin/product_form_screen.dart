@@ -73,15 +73,16 @@ class _ProductFormScreenState extends State<ProductFormScreen>
       _nameController.text = widget.product!.name;
       _descriptionController.text = widget.product!.description;
       _priceController.text = widget.product!.price.toString();
-      _brandController.text = widget.product!.brand;
-      _ageRangeController.text = widget.product!.ageRange;
+      _brandController.text = widget.product!.brand ?? '';
+      _ageRangeController.text = widget.product!.ageRange ?? '';
       _stockController.text = widget.product!.stock.toString();
-      _discountController.text = widget.product!.discountPercentage.toString();
+      _discountController.text =
+          widget.product!.discountPercentage?.toString() ?? '';
       _selectedCategory = widget.product!.category;
-      _isFeatured = widget.product!.isFeatured;
-      _isEcoFriendly = widget.product!.isEcoFriendly;
-      _isOrganic = widget.product!.isOrganic;
-      _imageUrls = widget.product!.imageUrls;
+      _isFeatured = widget.product!.isFeatured ?? false;
+      _isEcoFriendly = widget.product!.isEcoFriendly ?? false;
+      _isOrganic = widget.product!.isOrganic ?? false;
+      _imageUrls = widget.product!.imageUrls ?? [];
     }
   }
 
@@ -139,17 +140,24 @@ class _ProductFormScreenState extends State<ProductFormScreen>
           name: _nameController.text,
           description: _descriptionController.text,
           price: double.parse(_priceController.text),
-          imageUrls: _imageUrls,
+          unit: 'item', // Default unit
+          taxRate: 0.0, // Default tax rate
           category: _selectedCategory!,
-          brand: _brandController.text,
-          ageRange: _ageRangeController.text,
-          stock: int.parse(_stockController.text),
-          rating: widget.product?.rating ?? 0,
+          sku: null, // Optional SKU
+          stockQuantity: int.parse(_stockController.text),
+          isService: false, // Default to physical product
+          isActive: true, // Default to active
+          imageUrls: _imageUrls,
+          brand: _brandController.text.isEmpty ? null : _brandController.text,
+          ageRange: _ageRangeController.text.isEmpty
+              ? null
+              : _ageRangeController.text,
+          rating: widget.product?.rating ?? 0.0,
           reviewCount: widget.product?.reviewCount ?? 0,
           isFeatured: _isFeatured,
           isEcoFriendly: _isEcoFriendly,
           isOrganic: _isOrganic,
-          discountPercentage: double.tryParse(_discountController.text) ?? 0,
+          discountPercentage: double.tryParse(_discountController.text) ?? 0.0,
           createdAt: widget.product?.createdAt ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );

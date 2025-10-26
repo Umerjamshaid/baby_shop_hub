@@ -128,7 +128,7 @@ class _EnhancedProductManagementScreenState
           _selectedStatus == 'All' ||
           (_selectedStatus == 'In Stock' && product.inStock) ||
           (_selectedStatus == 'Out of Stock' && !product.inStock) ||
-          (_selectedStatus == 'Featured' && product.isFeatured);
+          (_selectedStatus == 'Featured' && (product.isFeatured ?? false));
 
       return matchesSearch && matchesCategory && matchesStatus;
     }).toList();
@@ -554,7 +554,7 @@ class _EnhancedProductManagementScreenState
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (product.isFeatured)
+                        if (product.isFeatured ?? false)
                           Container(
                             margin: const EdgeInsets.only(left: 8),
                             padding: const EdgeInsets.symmetric(
