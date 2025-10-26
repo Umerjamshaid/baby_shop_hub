@@ -34,6 +34,7 @@ class ProductService {
       if (oldProductDoc.exists) {
         final oldProduct = Product.fromMap(
           oldProductDoc.data() as Map<String, dynamic>,
+          oldProductDoc.id,
         );
 
         // If category changed, update both old and new category counts
@@ -64,6 +65,7 @@ class ProductService {
       if (productDoc.exists) {
         final product = Product.fromMap(
           productDoc.data() as Map<String, dynamic>,
+          productDoc.id,
         );
 
         // Delete the product
@@ -150,7 +152,7 @@ class ProductService {
           query = query.where('ageRange', whereIn: filters.ageRanges);
         }
         if (filters.inStockOnly) {
-          query = query.where('stock', isGreaterThan: 0);
+          query = query.where('stockQuantity', isGreaterThan: 0);
         }
         if (filters.ecoFriendlyOnly) {
           query = query.where('isEcoFriendly', isEqualTo: true);
@@ -166,7 +168,10 @@ class ProductService {
       QuerySnapshot snapshot = await query.get();
 
       List<Product> products = snapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
 
       // Apply client-side filters
@@ -188,7 +193,10 @@ class ProductService {
           .get();
 
       return snapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch products: $e');
@@ -204,7 +212,10 @@ class ProductService {
           .get();
 
       return snapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch featured products: $e');
@@ -220,7 +231,10 @@ class ProductService {
           .get();
 
       return snapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch category products: $e');
@@ -236,7 +250,7 @@ class ProductService {
           .get();
 
       if (doc.exists) {
-        return Product.fromMap(doc.data() as Map<String, dynamic>);
+        return Product.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
       return null;
     } catch (e) {
@@ -252,7 +266,8 @@ class ProductService {
         return product.name.toLowerCase().contains(query.toLowerCase()) ||
             product.description.toLowerCase().contains(query.toLowerCase()) ||
             product.category.toLowerCase().contains(query.toLowerCase()) ||
-            product.brand.toLowerCase().contains(query.toLowerCase());
+            (product.brand?.toLowerCase().contains(query.toLowerCase()) ??
+                false);
       }).toList();
     } catch (e) {
       throw Exception('Failed to search products: $e');
@@ -274,7 +289,10 @@ class ProductService {
             product.description.toLowerCase().contains(
               filters.query.toLowerCase(),
             ) ||
-            product.brand.toLowerCase().contains(filters.query.toLowerCase()) ||
+            (product.brand?.toLowerCase().contains(
+                  filters.query.toLowerCase(),
+                ) ??
+                false) ||
             product.category.toLowerCase().contains(
               filters.query.toLowerCase(),
             );
@@ -283,13 +301,15 @@ class ProductService {
 
     if (filters.sizes.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
-        return product.sizes.any((size) => filters.sizes.contains(size));
+        return product.sizes?.any((size) => filters.sizes.contains(size)) ??
+            false;
       }).toList();
     }
 
     if (filters.colors.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
-        return product.colors.any((color) => filters.colors.contains(color));
+        return product.colors?.any((color) => filters.colors.contains(color)) ??
+            false;
       }).toList();
     }
 
@@ -306,17 +326,22 @@ class ProductService {
         products.sort((a, b) => b.price.compareTo(a.price));
         break;
       case 'rating':
-        products.sort((a, b) => b.rating.compareTo(a.rating));
+        products.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
         break;
       case 'newest':
-        products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        products.sort(
+          (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+            a.createdAt ?? DateTime.now(),
+          ),
+        );
         break;
       case 'name':
         products.sort((a, b) => a.name.compareTo(b.name));
         break;
       case 'discount':
         products.sort(
-          (a, b) => b.discountPercentage.compareTo(a.discountPercentage),
+          (a, b) =>
+              (b.discountPercentage ?? 0).compareTo(a.discountPercentage ?? 0),
         );
         break;
       default:

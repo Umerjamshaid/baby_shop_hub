@@ -235,7 +235,10 @@ class AdminService {
 
       for (var doc in productsSnapshot.docs) {
         final productData = doc.data();
-        final product = Product.fromMap(Map<String, dynamic>.from(productData));
+        final product = Product.fromMap(
+          Map<String, dynamic>.from(productData),
+          productData['id'] ?? '',
+        );
         productDetails[product.id] = product;
       }
 

@@ -32,7 +32,6 @@ import 'screens/admin/analytics_screen.dart';
 import 'screens/admin/admin_products_screen.dart';
 import 'screens/admin/admin_orders_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
-import 'screens/admin/enhanced_product_management_screen.dart';
 import 'screens/admin/data_export_import_screen.dart';
 import 'screens/admin/reports_screen.dart';
 import 'screens/settings_screen.dart';
@@ -123,7 +122,8 @@ class MyApp extends StatelessWidget {
               '/admin-dashboard': (context) => AdminDashboardScreen(),
               '/analytics': (context) => AnalyticsScreen(),
               // Admin management routes used by drawer (map to existing screens)
-              '/manage-products': (context) => const AdminProductsScreen(),
+              '/manage-products': (context) =>
+                  const EnhancedProductManagementScreen(),
               '/manage-orders': (context) => const AdminOrdersScreen(),
               '/manage-users': (context) => const AdminUsersScreen(),
               // New admin screens

@@ -108,13 +108,14 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
       _priceController.text = widget.product!.price.toString();
       _stockController.text = widget.product!.stock.toString();
       _selectedCategory = widget.product!.category;
-      _brandController.text = widget.product!.brand;
-      _ageRangeController.text = widget.product!.ageRange;
-      _imageUrls = widget.product!.imageUrls;
-      _isFeatured = widget.product!.isFeatured;
-      _discountController.text = widget.product!.discountPercentage.toString();
-      _isEcoFriendly = widget.product!.isEcoFriendly;
-      _isOrganic = widget.product!.isOrganic;
+      _brandController.text = widget.product!.brand ?? '';
+      _ageRangeController.text = widget.product!.ageRange ?? '';
+      _imageUrls = widget.product!.imageUrls ?? [];
+      _isFeatured = widget.product!.isFeatured ?? false;
+      _discountController.text =
+          widget.product!.discountPercentage?.toString() ?? '';
+      _isEcoFriendly = widget.product!.isEcoFriendly ?? false;
+      _isOrganic = widget.product!.isOrganic ?? false;
 
       // Populate new optional fields
       _weightController.text = widget.product!.weight?.toString() ?? '';
@@ -124,10 +125,10 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
       _skuController.text = widget.product!.sku ?? '';
       _warrantyController.text = widget.product!.warranty ?? '';
       _originCountryController.text = widget.product!.originCountry ?? '';
-      _selectedSizes = List.from(widget.product!.sizes);
-      _selectedColors = List.from(widget.product!.colors);
-      _selectedMaterials = List.from(widget.product!.materials);
-      _tags = List.from(widget.product!.tags);
+      _selectedSizes = List.from(widget.product!.sizes ?? []);
+      _selectedColors = List.from(widget.product!.colors ?? []);
+      _selectedMaterials = List.from(widget.product!.materials ?? []);
+      _tags = List.from(widget.product!.tags ?? []);
       _tagsController.text = _tags.join(', ');
     }
   }
@@ -214,26 +215,31 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
           price: double.parse(_priceController.text),
-          imageUrls: _imageUrls,
+          unit: 'item',
+          taxRate: 0.0,
           category: _selectedCategory!,
+          sku: _skuController.text.trim().isEmpty
+              ? null
+              : _skuController.text.trim(),
+          stockQuantity: int.parse(_stockController.text),
+          isService: false,
+          isActive: true,
+          imageUrls: _imageUrls,
           brand: _brandController.text.trim(),
           ageRange: _ageRangeController.text.trim(),
-          stock: int.parse(_stockController.text),
-          isFeatured: _isFeatured,
-          discountPercentage: double.tryParse(_discountController.text) ?? 0,
-          isEcoFriendly: _isEcoFriendly,
-          isOrganic: _isOrganic,
           rating: widget.product?.rating ?? 0,
           reviewCount: widget.product?.reviewCount ?? 0,
-          createdAt: widget.product?.createdAt ?? DateTime.now(),
-          // New optional fields
+          isFeatured: _isFeatured,
+          sizes: _selectedSizes,
+          colors: _selectedColors,
+          materials: _selectedMaterials,
+          isEcoFriendly: _isEcoFriendly,
+          isOrganic: _isOrganic,
+          discountPercentage: double.tryParse(_discountController.text) ?? 0,
           weight: double.tryParse(_weightController.text),
           length: double.tryParse(_lengthController.text),
           width: double.tryParse(_widthController.text),
           height: double.tryParse(_heightController.text),
-          sku: _skuController.text.trim().isEmpty
-              ? null
-              : _skuController.text.trim(),
           tags: _tagsController.text.trim().isEmpty
               ? []
               : _tagsController.text
@@ -247,9 +253,8 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen>
           originCountry: _originCountryController.text.trim().isEmpty
               ? null
               : _originCountryController.text.trim(),
-          sizes: _selectedSizes,
-          colors: _selectedColors,
-          materials: _selectedMaterials,
+          createdAt: widget.product?.createdAt ?? DateTime.now(),
+          updatedAt: DateTime.now(),
         );
 
         if (widget.product == null) {

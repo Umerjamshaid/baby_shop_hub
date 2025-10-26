@@ -25,6 +25,22 @@ class AdminNavigationDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            title: Text('Analytics'),
+            onTap: () {
+              // Navigate to Analytics
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/analytics');
+            },
+          ),
+          ListTile(
+            title: Text('Advanced Analytics'),
+            onTap: () {
+              // Navigate to Advanced Analytics
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/advanced-analytics');
+            },
+          ),
+          ListTile(
             title: Text('User Management'),
             onTap: () {
               // Navigate to User Management
@@ -62,6 +78,14 @@ class AdminNavigationDrawer extends StatelessWidget {
               // Navigate to Reports
               Navigator.pop(context);
               Navigator.pushNamed(context, '/reports');
+            },
+          ),
+          ListTile(
+            title: Text('Settings'),
+            onTap: () {
+              // Navigate to Settings
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/admin-settings');
             },
           ),
         ],

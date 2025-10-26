@@ -29,8 +29,9 @@ class FavoritesProvider with ChangeNotifier {
 
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
-        final List<String> favoriteProductIds =
-        List<String>.from(userData['favoriteProducts'] ?? []);
+        final List<String> favoriteProductIds = List<String>.from(
+          userData['favoriteProducts'] ?? [],
+        );
 
         if (favoriteProductIds.isEmpty) {
           _favoriteProducts = [];
@@ -46,7 +47,10 @@ class FavoritesProvider with ChangeNotifier {
             .get();
 
         _favoriteProducts = productsSnapshot.docs
-            .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+            .map(
+              (doc) =>
+                  Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+            )
             .toList();
       } else {
         _favoriteProducts = [];
@@ -68,8 +72,8 @@ class FavoritesProvider with ChangeNotifier {
           .collection(AppConstants.usersCollection)
           .doc(userId)
           .update({
-        'favoriteProducts': FieldValue.arrayUnion([productId])
-      });
+            'favoriteProducts': FieldValue.arrayUnion([productId]),
+          });
 
       // Reload favorites to update the list
       await loadUserFavorites(userId);
@@ -85,8 +89,8 @@ class FavoritesProvider with ChangeNotifier {
           .collection(AppConstants.usersCollection)
           .doc(userId)
           .update({
-        'favoriteProducts': FieldValue.arrayRemove([productId])
-      });
+            'favoriteProducts': FieldValue.arrayRemove([productId]),
+          });
 
       // Reload favorites to update the list
       await loadUserFavorites(userId);

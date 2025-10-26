@@ -1082,8 +1082,8 @@ class _LowStockCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           image: DecorationImage(
                             image: NetworkImage(
-                              p.imageUrls.isNotEmpty
-                                  ? p.imageUrls.first
+                              p.imageUrls?.isNotEmpty == true
+                                  ? p.imageUrls!.first
                                   : 'https://via.placeholder.com/44',
                             ),
                             fit: BoxFit.cover,
@@ -1165,7 +1165,7 @@ class _PopularProductsCard extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const AdminProductsScreen(),
+                    builder: (_) => const EnhancedProductManagementScreen(),
                   ),
                 ),
                 icon: const Icon(Icons.arrow_forward),
@@ -1213,8 +1213,8 @@ class _PopularProductsCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(15),
                           image: DecorationImage(
                             image: NetworkImage(
-                              product.imageUrls.isNotEmpty
-                                  ? product.imageUrls[0]
+                              product.imageUrls?.isNotEmpty == true
+                                  ? product.imageUrls![0]
                                   : 'https://via.placeholder.com/60',
                             ),
                             fit: BoxFit.cover,
@@ -1669,7 +1669,9 @@ void _handleMenuTap(BuildContext context, int index) {
     case 1:
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const AdminProductsScreen()),
+        MaterialPageRoute(
+          builder: (_) => const EnhancedProductManagementScreen(),
+        ),
       );
       break;
     case 2:

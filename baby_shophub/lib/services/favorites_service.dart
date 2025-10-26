@@ -12,8 +12,8 @@ class FavoritesService {
         .collection(AppConstants.usersCollection)
         .doc(userId)
         .update({
-      'favoriteProducts': FieldValue.arrayUnion([productId])
-    });
+          'favoriteProducts': FieldValue.arrayUnion([productId]),
+        });
   }
 
   // Remove product from favorites
@@ -22,8 +22,8 @@ class FavoritesService {
         .collection(AppConstants.usersCollection)
         .doc(userId)
         .update({
-      'favoriteProducts': FieldValue.arrayRemove([productId])
-    });
+          'favoriteProducts': FieldValue.arrayRemove([productId]),
+        });
   }
 
   // Get user's favorite products
@@ -37,8 +37,9 @@ class FavoritesService {
 
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
-        final List<String> favoriteProductIds =
-        List<String>.from(userData['favoriteProducts'] ?? []);
+        final List<String> favoriteProductIds = List<String>.from(
+          userData['favoriteProducts'] ?? [],
+        );
 
         if (favoriteProductIds.isEmpty) {
           return [];
@@ -51,7 +52,10 @@ class FavoritesService {
             .get();
 
         return productsSnapshot.docs
-            .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+            .map(
+              (doc) =>
+                  Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+            )
             .toList();
       }
       return [];
@@ -70,8 +74,9 @@ class FavoritesService {
 
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
-        final List<String> favoriteProductIds =
-        List<String>.from(userData['favoriteProducts'] ?? []);
+        final List<String> favoriteProductIds = List<String>.from(
+          userData['favoriteProducts'] ?? [],
+        );
 
         return favoriteProductIds.contains(productId);
       }

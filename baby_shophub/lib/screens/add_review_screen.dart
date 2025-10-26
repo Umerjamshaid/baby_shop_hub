@@ -368,7 +368,7 @@ class _AddReviewScreenState extends State<AddReviewScreen>
                     Icon(Icons.star, size: 16, color: Colors.amber[600]),
                     const SizedBox(width: 4),
                     Text(
-                      '${widget.product.rating.toStringAsFixed(1)} (${widget.product.reviewCount} reviews)',
+                      '${(widget.product.rating ?? 0).toStringAsFixed(1)} (${widget.product.reviewCount} reviews)',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                   ],

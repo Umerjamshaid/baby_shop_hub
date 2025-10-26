@@ -115,17 +115,22 @@ class ProductProvider with ChangeNotifier {
         sortedProducts.sort((a, b) => b.price.compareTo(a.price));
         break;
       case 'rating':
-        sortedProducts.sort((a, b) => b.rating.compareTo(a.rating));
+        sortedProducts.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
         break;
       case 'newest':
-        sortedProducts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        sortedProducts.sort(
+          (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+            a.createdAt ?? DateTime.now(),
+          ),
+        );
         break;
       case 'name':
         sortedProducts.sort((a, b) => a.name.compareTo(b.name));
         break;
       case 'discount':
         sortedProducts.sort(
-          (a, b) => b.discountPercentage.compareTo(a.discountPercentage),
+          (a, b) =>
+              (b.discountPercentage ?? 0).compareTo(a.discountPercentage ?? 0),
         );
         break;
     }

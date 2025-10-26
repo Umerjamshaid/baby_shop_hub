@@ -30,7 +30,10 @@ class FirestoreService {
   Stream<List<Product>> getProducts() {
     return productsCollection.snapshots().map((snapshot) {
       return snapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
     });
   }
@@ -42,7 +45,10 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) =>
+                    Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+              )
               .toList();
         });
   }
@@ -54,7 +60,10 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) =>
+                    Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+              )
               .toList();
         });
   }
@@ -64,7 +73,7 @@ class FirestoreService {
     try {
       DocumentSnapshot doc = await productsCollection.doc(productId).get();
       if (doc.exists) {
-        return Product.fromMap(doc.data() as Map<String, dynamic>);
+        return Product.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
       return null;
     } catch (e) {

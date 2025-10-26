@@ -353,8 +353,8 @@ Get it now on BabyShopHub! 🛍️
                 child: Stack(
                   children: [
                     Image.network(
-                      widget.product.imageUrls.isNotEmpty
-                          ? widget.product.imageUrls[_currentImageIndex]
+                      (widget.product.imageUrls?.isNotEmpty ?? false)
+                          ? widget.product.imageUrls![_currentImageIndex]
                           : 'https://via.placeholder.com/300',
                       width: double.infinity,
                       height: double.infinity,
@@ -385,13 +385,13 @@ Get it now on BabyShopHub! 🛍️
           const SizedBox(height: 16),
 
           // Enhanced Image Thumbnails
-          if (widget.product.imageUrls.length > 1)
+          if ((widget.product.imageUrls?.length ?? 0) > 1)
             Container(
               height: 80,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: widget.product.imageUrls.length,
+                itemCount: widget.product.imageUrls?.length ?? 0,
                 itemBuilder: (context, index) {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -428,7 +428,7 @@ Get it now on BabyShopHub! 🛍️
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
-                            widget.product.imageUrls[index],
+                            widget.product.imageUrls?[index] ?? '',
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -489,7 +489,7 @@ Get it now on BabyShopHub! 🛍️
                   const Icon(Icons.star, size: 18, color: Colors.amber),
                   const SizedBox(width: 4),
                   Text(
-                    widget.product.rating.toStringAsFixed(1),
+                    (widget.product.rating ?? 0).toStringAsFixed(1),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -906,9 +906,11 @@ Get it now on BabyShopHub! 🛍️
                   padding: const EdgeInsets.all(16),
                   child: ListView(
                     children: [
-                      _buildSpecItem('Brand', widget.product.brand),
+                      if (widget.product.brand != null)
+                        _buildSpecItem('Brand', widget.product.brand!),
                       _buildSpecItem('Category', widget.product.category),
-                      _buildSpecItem('Age Range', widget.product.ageRange),
+                      if (widget.product.ageRange != null)
+                        _buildSpecItem('Age Range', widget.product.ageRange!),
                       _buildSpecItem(
                         'Weight',
                         '${(widget.product.price * 0.1).toStringAsFixed(1)} kg',

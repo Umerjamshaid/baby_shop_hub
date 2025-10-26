@@ -98,6 +98,17 @@ dependencies:
   go_router: ^16.3.0
   permission_handler: ^12.0.1
 
+  # Invoice System Packages
+  fl_chart: ^0.65.0
+  toastification: ^1.2.0
+  open_file: ^3.5.0
+  flutter_secure_storage: ^9.0.0
+  local_auth: ^2.1.0
+  json_annotation: ^4.9.0
+  json_serializable: ^6.7.0
+  get_it: ^7.6.0
+  sentry_flutter: ^7.13.0
+  jiffy: ^6.4.3
 
 dev_dependencies:
   flutter_test:
@@ -109,6 +120,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+
+  # Code Generation
+  build_runner: ^2.4.0
+
+  # Testing
+  mockito: ^5.4.0
+  golden_toolkit: ^0.13.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

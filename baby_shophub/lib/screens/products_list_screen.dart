@@ -293,24 +293,24 @@ class _ProductsListScreenState extends State<ProductsListScreen>
             curve: Curves.easeOut,
             scale: _showScrollToTop ? 1.0 : 0.9,
             child: SafeArea(
-            minimum: const EdgeInsets.only(bottom: 8),
-            child: FloatingActionButton(
-            onPressed: () {
-              _scrollController.animateTo(
-                0,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOut,
-              );
-            },
-            backgroundColor: Theme.of(context).primaryColor,
-            tooltip: 'Scroll to top',
-              mini: true,
-              heroTag: 'products_list_scroll_top',
-              child: const Icon(
-                Icons.keyboard_arrow_up_rounded,
-                color: Colors.white,
+              minimum: const EdgeInsets.only(bottom: 8),
+              child: FloatingActionButton(
+                onPressed: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOut,
+                  );
+                },
+                backgroundColor: Theme.of(context).primaryColor,
+                tooltip: 'Scroll to top',
+                mini: true,
+                heroTag: 'products_list_scroll_top',
+                child: const Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  color: Colors.white,
+                ),
               ),
-            ),
             ),
           ),
         ),
@@ -763,7 +763,7 @@ class EnhancedProductCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              product.rating.toStringAsFixed(1),
+                              (product.rating ?? 0).toStringAsFixed(1),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -1006,7 +1006,7 @@ class ProductListCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  product.rating.toStringAsFixed(1),
+                                  (product.rating ?? 0).toStringAsFixed(1),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
