@@ -9,6 +9,8 @@ import '../providers/favorites_provider.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/product/reviews_list.dart';
 import 'add_review_screen.dart';
+import 'package:animations/animations.dart';
+import '../services/product_service.dart';
 import 'reviews_analytics_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -238,6 +240,11 @@ Get it now on BabyShopHub! 🛍️
 
                     // Tabbed Content Section
                     _buildTabbedContent(authProvider),
+
+                    const SizedBox(height: 24),
+
+                    // Recommended Products Section
+                    _buildRecommendedProducts(),
 
                     const SizedBox(height: 100), // Space for bottom button
                   ],
@@ -1064,6 +1071,140 @@ Get it now on BabyShopHub! 🛍️
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRecommendedProducts() {
+    return FutureBuilder<List<Product>>(
+      future: ProductService().getSimilarProducts(widget.product),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final similarProducts = snapshot.data!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Recommended for You',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 260,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: similarProducts.length,
+                itemBuilder: (context, index) {
+                  final product = similarProducts[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: OpenContainer(
+                      closedElevation: 0,
+                      openElevation: 0,
+                      closedColor: Colors.transparent,
+                      openColor: Colors.transparent,
+                      transitionDuration: const Duration(milliseconds: 500),
+                      closedBuilder: (context, action) {
+                        return Container(
+                          width: 160,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Image
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(16),
+                                  ),
+                                  child: Image.network(
+                                    product.firstImage,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.image, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Details
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      product.formattedPrice,
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          size: 12,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          (product.rating ?? 0).toStringAsFixed(1),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      openBuilder: (context, action) {
+                        return ProductDetailScreen(product: product);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -10,6 +10,9 @@ import 'package:baby_shophub/screens/admin/admin_products_screen.dart';
 import 'package:baby_shophub/screens/admin/admin_users_screen.dart';
 import 'package:baby_shophub/screens/admin/categories_screen.dart';
 import 'package:baby_shophub/screens/admin/notification_management_screen.dart';
+import 'package:baby_shophub/screens/admin/admin_invoice_screen.dart';
+import 'package:baby_shophub/screens/admin/reports_screen.dart';
+import 'package:baby_shophub/screens/admin/data_export_import_screen.dart';
 import 'package:baby_shophub/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1524,6 +1527,21 @@ Drawer _buildDrawer(BuildContext context) {
       'title': 'Notifications',
       'color': AppColors.warning,
     },
+    {
+      'icon': Icons.receipt_long,
+      'title': 'Invoices',
+      'color': AppColors.primary,
+    },
+    {
+      'icon': Icons.analytics,
+      'title': 'Reports',
+      'color': AppColors.secondary,
+    },
+    {
+      'icon': Icons.import_export,
+      'title': 'Data Export',
+      'color': AppColors.success,
+    },
   ];
 
   return Drawer(
@@ -1703,7 +1721,27 @@ void _handleMenuTap(BuildContext context, int index) {
     case 6:
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const NotificationManagementScreen()),
+        MaterialPageRoute(
+          builder: (_) => const NotificationManagementScreen(),
+        ),
+      );
+      break;
+    case 7:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminInvoiceScreen()),
+      );
+      break;
+    case 8:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ReportsScreen()),
+      );
+      break;
+    case 9:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DataExportImportScreen()),
       );
       break;
   }

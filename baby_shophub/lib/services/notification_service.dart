@@ -425,7 +425,7 @@ class NotificationService {
   ) {
     switch (type) {
       case 'price_drop':
-        return '🔥 ${data['discount']}% OFF – was ₹${data['oldPrice']} now ₹${data['newPrice']}';
+        return '🔥 ${data['discount']}% OFF – was \$${data['oldPrice']} now \$${data['newPrice']}';
       case 'stock_low':
         return '⚠️ Only ${data['stockLeft']} left in stock – hurry!';
       case 'cart_reminder':

@@ -6,6 +6,8 @@ import '../models/search_filters_model.dart';
 import '../utils/constants.dart';
 import '../widgets/common/app_button.dart';
 import 'products_list_screen.dart';
+import '../services/product_service.dart';
+import '../models/product_model.dart';
 
 class AdvancedSearchScreen extends StatefulWidget {
   final String? initialCategory;
@@ -23,17 +25,32 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   final _minRatingController = TextEditingController();
 
   late SearchFilters _filters;
-  late List<String> _brands;
-  late List<String> _ageRanges;
-  late List<String> _sizes;
-  late List<String> _colors;
+  List<String> _brands = [];
+  List<String> _ageRanges = [];
+  List<String> _sizes = [];
+  List<String> _colors = [];
   bool _isLoading = true;
+  List<Product> _suggestedProducts = [];
 
   @override
   void initState() {
     super.initState();
     _filters = SearchFilters(category: widget.initialCategory ?? 'All');
     _loadFilterOptions();
+    _loadSuggestions();
+  }
+
+  Future<void> _loadSuggestions() async {
+    try {
+      final products = await ProductService().getFeaturedProducts();
+      if (mounted) {
+        setState(() {
+          _suggestedProducts = products.take(4).toList();
+        });
+      }
+    } catch (e) {
+      print('Error loading suggestions: $e');
+    }
   }
 
   Future<void> _loadFilterOptions() async {
@@ -108,6 +125,14 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
           ),
           const SizedBox(height: 24),
 
+          // Trending & Suggestions (Only show if no search query)
+          if (_searchController.text.isEmpty) ...[
+             _buildTrendingAndSuggestions(),
+             const SizedBox(height: 24),
+             const Divider(),
+             const SizedBox(height: 24),
+          ],
+
           // Price Range
           _buildPriceFilter(),
           const SizedBox(height: 24),
@@ -152,6 +177,117 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTrendingAndSuggestions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Trending Searches',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            'Diapers',
+            'Strollers',
+            'Baby Food',
+            'Toys',
+            'Wipes',
+            'Car Seats'
+          ].map((term) {
+            return ActionChip(
+              label: Text(term),
+              onPressed: () {
+                _searchController.text = term;
+                setState(() {
+                  _filters = _filters.copyWith(query: term);
+                });
+                _applySearch();
+              },
+              avatar: const Icon(Icons.trending_up, size: 16),
+              backgroundColor: Colors.blue[50],
+              labelStyle: TextStyle(color: Colors.blue[800]),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+        if (_suggestedProducts.isNotEmpty) ...[
+          const Text(
+            'You Might Like',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _suggestedProducts.length,
+              itemBuilder: (context, index) {
+                final product = _suggestedProducts[index];
+                return Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      // Navigate to product detail (would need import)
+                      // For now just populate search
+                      _searchController.text = product.name;
+                       setState(() {
+                        _filters = _filters.copyWith(query: product.name);
+                      });
+                      _applySearch();
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                            child: Image.network(
+                              product.firstImage,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_,__,___) => Container(color: Colors.grey[100]),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                product.formattedPrice,
+                                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 

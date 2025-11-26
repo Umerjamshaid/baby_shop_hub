@@ -13,6 +13,10 @@ import 'auth/register_screen.dart';
 import 'edit_profile_screen.dart';
 import 'favorites_screen.dart';
 import 'settings_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/order_service.dart';
+import '../models/order_model.dart';
+import '../providers/favorites_provider.dart';
 
 /* -------------------------------------------------
    1.  CONSTANTS – change only here for re-skin
@@ -229,6 +233,18 @@ class _ProfileScreenState extends State<ProfileScreen>
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: _OrderPreview(userId: user.id),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: _WishlistPreview(),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           child: _ActionGrid(auth: auth),
         ),
       ),
@@ -351,7 +367,7 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                     image: user.profileImage != null
                         ? DecorationImage(
-                            image: NetworkImage(user.profileImage!),
+                            image: CachedNetworkImageProvider(user.profileImage!),
                             fit: BoxFit.cover,
                           )
                         : null,
@@ -877,4 +893,165 @@ class _WavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/* -------------  order preview  ------------- */
+class _OrderPreview extends StatelessWidget {
+  final String userId;
+  const _OrderPreview({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return _NeuroCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Orders',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              // View All button could go here
+            ],
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<List<Order>>(
+            future: OrderService().getUserOrders(userId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Text('No recent orders');
+              }
+              final orders = snapshot.data!.take(2).toList();
+              return Column(
+                children: orders.map((order) => _OrderTile(order: order)).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderTile extends StatelessWidget {
+  final Order order;
+  const _OrderTile({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(Icons.shopping_bag, color: AppColors.primary),
+      ),
+      title: Text('Order #${order.id.substring(0, 8)}'),
+      subtitle: Text(
+        '${order.items.length} items • \$${order.totalAmount.toStringAsFixed(2)}',
+      ),
+      trailing: _StatusChip(status: order.status),
+      onTap: () {
+         // Navigate to order details
+         // Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailsScreen(order: order)));
+      },
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        color = Colors.green;
+        break;
+      case 'processing':
+        color = Colors.blue;
+        break;
+      case 'cancelled':
+        color = Colors.red;
+        break;
+      default:
+        color = Colors.orange;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+/* -------------  wishlist preview  ------------- */
+class _WishlistPreview extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final favorites = context.watch<FavoritesProvider>().favoriteProducts;
+    
+    if (favorites.isEmpty) return const SizedBox.shrink();
+
+    return _NeuroCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'My Wishlist',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '${favorites.length} items',
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: favorites.length,
+              itemBuilder: (context, index) {
+                final product = favorites[index];
+                return Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: CachedNetworkImageProvider(product.firstImage),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

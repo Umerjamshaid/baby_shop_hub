@@ -108,6 +108,9 @@ dependencies:
   json_serializable: ^6.7.0
   get_it: ^7.6.0
   jiffy: ^6.4.3
+  confetti: ^0.8.0
+  animations: ^2.1.1
+  string_similarity: ^2.1.1
 
 dev_dependencies:
   flutter_test:

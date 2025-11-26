@@ -10,6 +10,7 @@ import '../models/product_model.dart';
 import '../models/review_model.dart';
 import '../widgets/common/star_rating.dart';
 import '../widgets/common/app_button.dart';
+import 'package:confetti/confetti.dart';
 
 class AddReviewScreen extends StatefulWidget {
   final Product product;
@@ -34,10 +35,12 @@ class _AddReviewScreenState extends State<AddReviewScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   final PageController _pageController = PageController();
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -109,10 +112,37 @@ class _AddReviewScreenState extends State<AddReviewScreen>
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
-                child: _buildContent(authProvider),
+                child: Stack(
+                  children: [
+                    _buildContent(authProvider),
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: ConfettiWidget(
+                        confettiController: _confettiController,
+                        blastDirectionality: BlastDirectionality.explosive,
+                        shouldLoop: false,
+                        colors: const [
+                          Colors.green,
+                          Colors.blue,
+                          Colors.pink,
+                          Colors.orange,
+                          Colors.purple
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    _animationController.dispose();
+    _commentController.dispose();
+    super.dispose();
   }
 
   Widget _buildContent(AuthProvider authProvider) {
@@ -769,6 +799,10 @@ class _AddReviewScreenState extends State<AddReviewScreen>
 
         await _reviewService.addReview(review);
 
+        _confettiController.play(); // Play confetti
+        await Future.delayed(const Duration(seconds: 2)); // Wait for animation
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Review submitted successfully!')),
         );
@@ -994,13 +1028,5 @@ class _AddReviewScreenState extends State<AddReviewScreen>
       default:
         return '${rating.toInt()}/5 stars';
     }
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    _animationController.dispose();
-    _pageController.dispose();
-    super.dispose();
   }
 }

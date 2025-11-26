@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../models/order_model.dart';
 import '../../models/product_model.dart';
 import '../../services/admin_service.dart';
@@ -624,6 +625,7 @@ class _ReportsScreenState extends State<ReportsScreen>
     final totalOrders = data['totalOrders'] ?? 0;
     final avgOrderValue = data['avgOrderValue'] ?? 0.0;
     final categorySales = data['categorySales'] as Map<String, double>? ?? {};
+    final dailySales = data['dailySales'] as Map<DateTime, double>? ?? {};
 
     return Column(
       children: [
@@ -672,55 +674,241 @@ class _ReportsScreenState extends State<ReportsScreen>
           ],
         ),
         const SizedBox(height: 24),
-        // Category Breakdown
-        _NeuroCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Sales by Category',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+        // Sales Trend Chart
+        if (dailySales.isNotEmpty)
+          _NeuroCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sales Trend',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ...categorySales.entries.map((entry) {
-                final percentage = totalRevenue > 0
-                    ? (entry.value / totalRevenue) * 100
-                    : 0;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.key,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 200,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: 1,
+                        getDrawingHorizontalLine: (value) {
+                          return FlLine(
+                            color: AppColors.textSecondary.withOpacity(0.1),
+                            strokeWidth: 1,
+                          );
+                        },
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            interval: 1,
+                            getTitlesWidget: (value, meta) {
+                              final dates = dailySales.keys.toList()..sort();
+                              if (value.toInt() >= 0 && value.toInt() < dates.length) {
+                                final date = dates[value.toInt()];
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    '${date.month}/${date.day}',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const Text('');
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                '\$${value.toInt()}',
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                      Text(
-                        '\$${entry.value.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                      borderData: FlBorderData(show: false),
+                      minX: 0,
+                      maxX: (dailySales.length - 1).toDouble(),
+                      minY: 0,
+                      maxY: dailySales.values.reduce((a, b) => a > b ? a : b) * 1.2,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: () {
+                            final sortedEntries = dailySales.entries.toList()
+                              ..sort((a, b) => a.key.compareTo(b.key));
+                            return sortedEntries.asMap().entries.map((entry) {
+                              return FlSpot(
+                                entry.key.toDouble(),
+                                entry.value.value,
+                              );
+                            }).toList();
+                          }(),
+                          isCurved: true,
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.secondary,
+                            ],
+                          ),
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary.withOpacity(0.2),
+                                AppColors.secondary.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-              }).toList(),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
+        const SizedBox(height: 24),
+        // Category Pie Chart
+        if (categorySales.isNotEmpty)
+          _NeuroCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sales by Category',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections: _buildPieChartSections(categorySales, totalRevenue),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...categorySales.entries.map((entry) {
+                  final percentage = totalRevenue > 0
+                      ? (entry.value / totalRevenue) * 100
+                      : 0;
+                  final color = _getCategoryColor(categorySales.keys.toList().indexOf(entry.key));
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '\$${entry.value.toStringAsFixed(0)} (${percentage.toStringAsFixed(1)}%)',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
       ],
     );
+  }
+
+  List<PieChartSectionData> _buildPieChartSections(
+    Map<String, double> categorySales,
+    double totalRevenue,
+  ) {
+    final categories = categorySales.entries.toList();
+    return categories.asMap().entries.map((entry) {
+      final index = entry.key;
+      final category = entry.value;
+      final percentage = totalRevenue > 0 ? (category.value / totalRevenue) * 100 : 0;
+      
+      return PieChartSectionData(
+        color: _getCategoryColor(index),
+        value: category.value,
+        title: '${percentage.toStringAsFixed(0)}%',
+        radius: 50,
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+  }
+
+  Color _getCategoryColor(int index) {
+    final colors = [
+      AppColors.primary,
+      AppColors.secondary,
+      AppColors.success,
+      AppColors.warning,
+      AppColors.error,
+      const Color(0xFF8B5CF6), // purple
+      const Color(0xFF06B6D4), // cyan
+      const Color(0xFFF97316), // orange
+    ];
+    return colors[index % colors.length];
   }
 
   Widget _buildProductReport() {

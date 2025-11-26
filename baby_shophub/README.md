@@ -523,6 +523,36 @@ You can connect this Flutter app to a headless e‑commerce backend like Medusa 
 
 Start by introducing a `BackendMode` flag and add new services under `services/medusa_*.dart` or `services/vendure_*.dart`, then swap via dependency injection. This lets you run Firebase today and migrate gradually.
 
+## 🔧 Troubleshooting
+        
+### Common Build Issues
+
+#### 1. "Gradle build failed to produce an .apk file"
+If you encounter this error, it usually means Flutter cannot locate the generated APK.
+**Fix:** Ensure your `android/build.gradle.kts` correctly points to the root build directory:
+```kotlin
+val newBuildDir: Directory = rootProject.layout.projectDirectory.dir("../build")
+rootProject.layout.buildDirectory.value(newBuildDir)
+```
+Then run:
+```bash
+flutter clean
+flutter run
+```
+
+#### 2. "MissingLibraryException: Could not find 'libflutter.so'" (x86 Emulators)
+Flutter is deprecating support for x86 Android targets. If you see this crash on an x86 emulator:
+**Fix:**
+1.  **Recommended:** Use an ARM64 emulator or a physical device.
+2.  **Workaround:** Re-enable x86 builds in `android/app/build.gradle.kts` by removing any `ndk { abiFilters ... }` blocks that exclude x86.
+
+#### 3. Kotlin Incremental Compilation Errors
+If the build fails with Kotlin-related errors:
+**Fix:** Disable incremental compilation in `android/gradle.properties`:
+```properties
+kotlin.incremental=false
+```
+
 ## ❓ FAQ
 
 ### General
