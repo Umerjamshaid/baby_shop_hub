@@ -17,6 +17,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
 import '../providers/favorites_provider.dart';
+import 'registry_list_screen.dart';
 
 /* -------------------------------------------------
    1.  CONSTANTS – change only here for re-skin
@@ -544,6 +545,15 @@ class _ActionGrid extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ActionTile(
+          icon: Icons.card_giftcard,
+          label: 'My Registries',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RegistryListScreen()),
           ),
         ),
         const SizedBox(height: 12),
