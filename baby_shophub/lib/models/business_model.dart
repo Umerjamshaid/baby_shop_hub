@@ -41,6 +41,17 @@ class Business {
   }
 
   factory Business.fromMap(Map<String, dynamic> map, String id) {
+    DateTime parseDate(dynamic dateValue, {DateTime? defaultValue}) {
+      if (dateValue == null) return defaultValue ?? DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? (defaultValue ?? DateTime.now());
+      }
+      return defaultValue ?? DateTime.now();
+    }
+
     return Business(
       id: id,
       businessName: map['businessName'] ?? '',
@@ -57,12 +68,8 @@ class Business {
       paymentTerms: map['paymentTerms'] ?? '',
       notes: map['notes'] ?? '',
       isDefault: map['isDefault'] ?? false,
-      createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt: parseDate(map['createdAt']),
+      updatedAt: parseDate(map['updatedAt']),
     );
   }
 

@@ -70,6 +70,28 @@ class Invoice {
   }
 
   factory Invoice.fromMap(Map<String, dynamic> map, String id) {
+    DateTime parseDate(dynamic dateValue, {DateTime? defaultValue}) {
+      if (dateValue == null) return defaultValue ?? DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? (defaultValue ?? DateTime.now());
+      }
+      return defaultValue ?? DateTime.now();
+    }
+
+    DateTime? parseNullableDate(dynamic dateValue) {
+      if (dateValue == null) return null;
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue);
+      }
+      return null;
+    }
+
     return Invoice(
       id: id,
       invoiceNumber: map['invoiceNumber'] ?? '',
@@ -87,11 +109,9 @@ class Invoice {
       total: (map['total'] ?? 0).toDouble(),
       currency: map['currency'] ?? 'USD',
       status: map['status'] ?? 'draft',
-      dueDate: (map['dueDate'] as Timestamp).toDate(),
-      issueDate: (map['issueDate'] as Timestamp).toDate(),
-      paidDate: map['paidDate'] != null
-          ? (map['paidDate'] as Timestamp).toDate()
-          : null,
+      dueDate: parseDate(map['dueDate']),
+      issueDate: parseDate(map['issueDate']),
+      paidDate: parseNullableDate(map['paidDate']),
       paidAmount: (map['paidAmount'] ?? 0).toDouble(),
       balanceDue: (map['balanceDue'] ?? 0).toDouble(),
       paymentMethod: map['paymentMethod'] ?? '',
@@ -102,22 +122,12 @@ class Invoice {
       ),
       pdfUrl: map['pdfUrl'],
       emailSent: map['emailSent'] ?? false,
-      emailSentAt: map['emailSentAt'] != null
-          ? (map['emailSentAt'] as Timestamp).toDate()
-          : null,
-      viewedAt: map['viewedAt'] != null
-          ? (map['viewedAt'] as Timestamp).toDate()
-          : null,
+      emailSentAt: parseNullableDate(map['emailSentAt']),
+      viewedAt: parseNullableDate(map['viewedAt']),
       remindersSent: map['remindersSent'] ?? 0,
-      lastReminderAt: map['lastReminderAt'] != null
-          ? (map['lastReminderAt'] as Timestamp).toDate()
-          : null,
-      createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      lastReminderAt: parseNullableDate(map['lastReminderAt']),
+      createdAt: parseDate(map['createdAt']),
+      updatedAt: parseDate(map['updatedAt']),
     );
   }
 

@@ -459,16 +459,19 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildReportTypeChip('Sales', 'sales'),
-              const SizedBox(width: 8),
-              _buildReportTypeChip('Products', 'products'),
-              const SizedBox(width: 8),
-              _buildReportTypeChip('Customers', 'customers'),
-              const SizedBox(width: 8),
-              _buildReportTypeChip('Inventory', 'inventory'),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildReportTypeChip('Sales', 'sales'),
+                const SizedBox(width: 8),
+                _buildReportTypeChip('Products', 'products'),
+                const SizedBox(width: 8),
+                _buildReportTypeChip('Customers', 'customers'),
+                const SizedBox(width: 8),
+                _buildReportTypeChip('Inventory', 'inventory'),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           // Date Range

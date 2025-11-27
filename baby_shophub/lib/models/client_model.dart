@@ -42,6 +42,28 @@ class Client {
   }
 
   factory Client.fromMap(Map<String, dynamic> map, String id) {
+    DateTime parseDate(dynamic dateValue, {DateTime? defaultValue}) {
+      if (dateValue == null) return defaultValue ?? DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? (defaultValue ?? DateTime.now());
+      }
+      return defaultValue ?? DateTime.now();
+    }
+
+    DateTime? parseNullableDate(dynamic dateValue) {
+      if (dateValue == null) return null;
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue);
+      }
+      return null;
+    }
+
     return Client(
       id: id,
       name: map['name'] ?? '',
@@ -56,15 +78,9 @@ class Client {
       totalPaid: (map['totalPaid'] ?? 0).toDouble(),
       outstandingAmount: (map['outstandingAmount'] ?? 0).toDouble(),
       invoiceCount: map['invoiceCount'] ?? 0,
-      lastInvoiceDate: map['lastInvoiceDate'] != null
-          ? (map['lastInvoiceDate'] as Timestamp).toDate()
-          : null,
-      createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      lastInvoiceDate: parseNullableDate(map['lastInvoiceDate']),
+      createdAt: parseDate(map['createdAt']),
+      updatedAt: parseDate(map['updatedAt']),
     );
   }
 

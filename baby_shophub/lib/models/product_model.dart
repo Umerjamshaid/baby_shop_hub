@@ -76,6 +76,17 @@ class Product {
   }
 
   factory Product.fromMap(Map<String, dynamic> map, String id) {
+    DateTime? parseDate(dynamic dateValue) {
+      if (dateValue == null) return null;
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue);
+      }
+      return null;
+    }
+
     return Product(
       id: id,
       name: map['name'] ?? '',
@@ -88,12 +99,8 @@ class Product {
       stockQuantity: map['stockQuantity'] ?? 0,
       isService: map['isService'] ?? false,
       isActive: map['isActive'] ?? true,
-      createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
-          : null,
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : null,
+      createdAt: parseDate(map['createdAt']),
+      updatedAt: parseDate(map['updatedAt']),
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
       brand: map['brand'],
       ageRange: map['ageRange'],

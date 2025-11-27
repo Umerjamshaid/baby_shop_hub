@@ -53,6 +53,17 @@ class Review {
   }
 
   factory Review.fromMap(Map<String, dynamic> map) {
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) return DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
     return Review(
       id: map['id'] ?? '',
       userId: map['userId'] ?? '',
@@ -63,8 +74,8 @@ class Review {
       rating: (map['rating'] as num).toDouble(),
       comment: map['comment'] ?? '',
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: map['updatedAt'] != null ? (map['updatedAt'] as Timestamp).toDate() : null,
+      createdAt: parseDate(map['createdAt']),
+      updatedAt: map['updatedAt'] != null ? parseDate(map['updatedAt']) : null,
       isVerifiedPurchase: map['isVerifiedPurchase'] ?? false,
       helpfulVotes: List<String>.from(map['helpfulVotes'] ?? []),
       isApproved: map['isApproved'] ?? true,

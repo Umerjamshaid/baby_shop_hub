@@ -320,12 +320,16 @@ class NotificationService {
       final snapshot = await _firestore
           .collection(AppConstants.notificationsCollection)
           .where('userIds', arrayContainsAny: [userId, 'all'])
-          .orderBy('sentAt', descending: true)
           .get();
 
-      return snapshot.docs
+      final notifications = snapshot.docs
           .map((doc) => NotificationModel.fromMap(doc.data()))
           .toList();
+      
+      // Sort client-side to avoid index requirement
+      notifications.sort((a, b) => b.sentAt.compareTo(a.sentAt));
+      
+      return notifications;
     } catch (e) {
       throw Exception('Failed to fetch user notifications: $e');
     }

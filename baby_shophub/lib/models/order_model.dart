@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class Order {
@@ -56,6 +57,28 @@ class Order {
   }
 
   factory Order.fromMap(Map<String, dynamic> map) {
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) return DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
+    DateTime? parseNullableDate(dynamic dateValue) {
+      if (dateValue == null) return null;
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue);
+      }
+      return null;
+    }
+
     return Order(
       id: map['id'] ?? '',
       userId: map['userId'] ?? '',
@@ -65,10 +88,8 @@ class Order {
       totalAmount: map['totalAmount']?.toDouble() ?? 0.0,
       status: map['status'] ?? 'pending',
       shippingAddress: ShippingAddress.fromMap(map['shippingAddress'] ?? {}),
-      orderDate: DateTime.parse(map['orderDate']),
-      deliveryDate: map['deliveryDate'] != null
-          ? DateTime.parse(map['deliveryDate'])
-          : null,
+      orderDate: parseDate(map['orderDate']),
+      deliveryDate: parseNullableDate(map['deliveryDate']),
       paymentMethod: map['paymentMethod'] ?? '',
       trackingNumber: map['trackingNumber'],
       carrier: map['carrier'],
@@ -77,9 +98,7 @@ class Order {
       ),
       refundAmount: map['refundAmount']?.toDouble(),
       refundReason: map['refundReason'],
-      refundDate: map['refundDate'] != null
-          ? DateTime.parse(map['refundDate'])
-          : null,
+      refundDate: parseNullableDate(map['refundDate']),
     );
   }
   // ADD THIS COPYWITH METHOD
@@ -212,9 +231,20 @@ class OrderStatusUpdate {
   }
 
   factory OrderStatusUpdate.fromMap(Map<String, dynamic> map) {
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) return DateTime.now();
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+      if (dateValue is String) {
+        return DateTime.tryParse(dateValue) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
     return OrderStatusUpdate(
       status: map['status'] ?? '',
-      timestamp: DateTime.parse(map['timestamp']),
+      timestamp: parseDate(map['timestamp']),
       message: map['message'],
     );
   }
