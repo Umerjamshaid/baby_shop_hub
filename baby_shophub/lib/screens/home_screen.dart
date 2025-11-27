@@ -13,6 +13,9 @@ import 'products_list_screen.dart';
 import 'orders_screen.dart';
 import 'product_detail_screen.dart';
 import 'advanced_search_screen.dart';
+import 'video_feed_screen.dart';
+import 'daily_spin_wheel_screen.dart';
+import 'registry_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -464,6 +467,46 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 _buildPromoBanner(),
                 const SizedBox(height: 24),
+                
+                // NEW FEATURES ROW
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFeatureCard(
+                        '🎥 Videos',
+                        'Watch & Shop',
+                        Colors.red,
+                        () {
+                          Navigator.pushNamed(context, '/video-feed');
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildFeatureCard(
+                        '🎰 Spin',
+                        'Win Rewards',
+                        Colors.orange,
+                        () {
+                          Navigator.pushNamed(context, '/spin-wheel');
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildFeatureCard(
+                        '🎁 Registry',
+                        'Gift Lists',
+                        Colors.purple,
+                        () {
+                          Navigator.pushNamed(context, '/registries');
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
                 const Text(
                   'Categories',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -1015,6 +1058,58 @@ class _HomeContentState extends State<HomeContent> {
                 'Try Again',
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureCard(
+    String title,
+    String subtitle,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, color.withOpacity(0.7)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

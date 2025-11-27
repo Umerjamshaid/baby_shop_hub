@@ -36,6 +36,9 @@ import 'screens/admin/data_export_import_screen.dart';
 import 'screens/admin/reports_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/video_feed_screen.dart';
+import 'screens/daily_spin_wheel_screen.dart';
+import 'screens/registry_list_screen.dart';
 import 'utils/local_storage.dart';
 import 'firebase_options.dart';
 
@@ -179,6 +182,10 @@ class MyApp extends StatelessWidget {
                   },
                 );
               },
+              // New Feature Routes
+              '/video-feed': (context) => const VideoFeedScreen(),
+              '/spin-wheel': (context) => const DailySpinWheelScreen(),
+              '/registries': (context) => const RegistryListScreen(),
             },
             onUnknownRoute: (settings) =>
                 MaterialPageRoute(builder: (context) => const HomeScreen()),

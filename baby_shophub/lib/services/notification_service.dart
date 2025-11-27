@@ -803,6 +803,60 @@ class NotificationService {
     );
   }
 
+  /// Send product notification with image
+  Future<void> sendProductNotification({
+    required String userId,
+    required String productId,
+    required String productName,
+    required String productImage,
+    required double price,
+    String type = 'product',
+    String? discount,
+  }) async {
+    String title;
+    String body;
+
+    switch (type) {
+      case 'price_drop':
+        title = '🔥 Price Drop Alert!';
+        body = '$productName is now \$$price${discount != null ? " ($discount% OFF)" : ""}';
+        break;
+      case 'back_in_stock':
+        title = '✨ Back in Stock!';
+        body = '$productName is available again. Get it before it\'s gone!';
+        break;
+      case 'new_arrival':
+        title = '🎉 New Arrival!';
+        body = 'Check out $productName - just added to our collection!';
+        break;
+      default:
+        title = 'BabyShopHub';
+        body = 'Check out $productName';
+    }
+
+    await sendNotificationToUsers(
+      title: title,
+      message: body,
+      userIds: [userId],
+      imageUrl: productImage,
+      data: {
+        'type': type,
+        'productId': productId,
+        'imageUrl': productImage,
+        'price': price.toString(),
+        if (discount != null) 'discount': discount,
+      },
+    );
+
+    // Also send local notification with image
+    await showLocalNotification(
+      title: title,
+      body: body,
+      payload: type,
+      imageUrl: productImage,
+    );
+  }
+
   Future<void> initialize() async {
     await initializeNotifications();
   }
