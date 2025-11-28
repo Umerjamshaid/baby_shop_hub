@@ -3,15 +3,24 @@ import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../models/search_filters_model.dart';
 import '../services/product_service.dart';
+import '../services/recommendation_service.dart';
 
 class ProductProvider with ChangeNotifier {
   final ProductService _productService = ProductService();
+  final RecommendationService _recommendationService = RecommendationService();
 
   List<Product> _allProducts = [];
   List<Product> _featuredProducts = [];
   List<Product> _filteredProducts = [];
+  List<Product> _recommendedProducts = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _error;
+
+  // ✅ Infinite scrolling pagination
+  int _currentPage = 1;
+  final int _pageSize = 20;
+  bool _hasMoreData = true;
 
   // ✅ Track active filters/search
   SearchFilters _currentFilters = SearchFilters();
@@ -21,7 +30,10 @@ class ProductProvider with ChangeNotifier {
   List<Product> get allProducts => _allProducts;
   List<Product> get featuredProducts => _featuredProducts;
   List<Product> get filteredProducts => _filteredProducts;
+  List<Product> get recommendedProducts => _recommendedProducts;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMoreData => _hasMoreData;
   String? get error => _error;
   SearchFilters get currentFilters => _currentFilters;
   String? get currentCategory => _currentCategory;
@@ -32,12 +44,15 @@ class ProductProvider with ChangeNotifier {
     _isLoading = true;
     _error = null;
     _currentFilters = filters;
+    _resetPagination();
     notifyListeners();
 
     try {
       _allProducts = await _productService.getProducts(filters: filters);
-      _filteredProducts = _allProducts;
+      // Show only first page initially
+      _filteredProducts = _allProducts.take(_pageSize).toList();
       _isLoading = false;
+      await loadRecommendations(); // Load recommendations after products
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -53,13 +68,16 @@ class ProductProvider with ChangeNotifier {
     _currentCategory = null;
     _currentSearchQuery = null;
     _currentFilters = SearchFilters(); // Reset filters completely
+    _resetPagination();
     notifyListeners();
 
     try {
       _allProducts = await _productService
           .getAllProducts(); // Use getAllProducts to get everything
-      _filteredProducts = _allProducts;
+      // Show only first page initially
+      _filteredProducts = _allProducts.take(_pageSize).toList();
       _isLoading = false;
+      await loadRecommendations(); // Load recommendations after products
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -144,6 +162,7 @@ class ProductProvider with ChangeNotifier {
     _currentCategory = null;
     _currentSearchQuery = null;
     _currentFilters = SearchFilters();
+    _resetPagination();
     // Don't just reset filteredProducts, actually reload all products
     loadAllProducts();
   }
@@ -163,4 +182,90 @@ class ProductProvider with ChangeNotifier {
       _productService.getSearchSuggestions(query);
   Future<List<String>> getPopularSearches() =>
       _productService.getPopularSearches();
+
+  // 🔹 Infinite Scrolling - Load more products
+  Future<void> loadMoreProducts() async {
+    if (_isLoadingMore || !_hasMoreData) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      // Since ProductService doesn't support pagination,
+      // we'll implement client-side pagination
+      final startIndex = _currentPage * _pageSize;
+      final endIndex = startIndex + _pageSize;
+
+      if (startIndex >= _allProducts.length) {
+        _hasMoreData = false;
+        _isLoadingMore = false;
+        notifyListeners();
+        return;
+      }
+
+      _currentPage++;
+      
+      // Simulate loading delay for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final newProducts = _allProducts.skip(startIndex).take(_pageSize).toList();
+      
+      if (newProducts.length < _pageSize) {
+        _hasMoreData = false;
+      }
+
+      _filteredProducts.addAll(newProducts);
+      _isLoadingMore = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoadingMore = false;
+      _currentPage--; // Rollback page increment on error
+      notifyListeners();
+    }
+  }
+
+  // 🔹 Reset pagination
+  void _resetPagination() {
+    _currentPage = 1;
+    _hasMoreData = true;
+  }
+
+  // 🔹 Load personalized recommendations
+  Future<void> loadRecommendations() async {
+    try {
+      _recommendedProducts = _recommendationService.getPersonalizedFeed(
+        allProducts: _allProducts,
+        limit: 20,
+      );
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading recommendations: $e');
+    }
+  }
+
+  // 🔹 Get related products for a specific product
+  List<Product> getRelatedProducts(Product product, {int limit = 6}) {
+    return _recommendationService.getRelatedProducts(
+      product: product,
+      allProducts: _allProducts,
+      limit: limit,
+    );
+  }
+
+  // 🔹 Track product view for recommendations
+  void trackProductView(Product product) {
+    _recommendationService.trackProductView(product);
+    loadRecommendations(); // Refresh recommendations
+  }
+
+  // 🔹 Track add to cart for recommendations
+  void trackAddToCart(String productId) {
+    _recommendationService.trackAddToCart(productId);
+  }
+
+  // 🔹 Track favorite for recommendations
+  void trackFavorite(String productId) {
+    _recommendationService.trackFavorite(productId);
+  }
 }

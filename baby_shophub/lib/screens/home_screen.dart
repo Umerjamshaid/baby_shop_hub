@@ -335,6 +335,27 @@ class _HomeContentState extends State<HomeContent> {
                 const SizedBox(height: 16),
                 _buildFeaturedProducts(productProvider),
                 const SizedBox(height: 24),
+                // Recommended Products Section
+                if (productProvider.recommendedProducts.isNotEmpty) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recommended For You',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          _navigateToProductsList(null);
+                        },
+                        child: const Text('See All'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildRecommendedProducts(productProvider),
+                  const SizedBox(height: 24),
+                ],
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -454,19 +475,20 @@ class _HomeContentState extends State<HomeContent> {
       onTap: () {
         _navigateToProductsList(title);
       },
-      child: Card(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -480,6 +502,21 @@ class _HomeContentState extends State<HomeContent> {
         itemCount: featuredProducts.length,
         itemBuilder: (context, index) {
           final product = featuredProducts[index];
+          return _buildProductItem(product);
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecommendedProducts(ProductProvider productProvider) {
+    final recommendedProducts = productProvider.recommendedProducts.take(6).toList();
+    return SizedBox(
+      height: 280,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: recommendedProducts.length,
+        itemBuilder: (context, index) {
+          final product = recommendedProducts[index];
           return _buildProductItem(product);
         },
       ),
