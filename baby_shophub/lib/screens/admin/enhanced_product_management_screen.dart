@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../../models/product_model.dart';
 import '../../services/admin_service.dart';
 import '../../services/product_service.dart';
-import '../../theme/app_theme.dart';
 import 'admin_edit_product_screen.dart';
 
 /* -------------------------------------------------

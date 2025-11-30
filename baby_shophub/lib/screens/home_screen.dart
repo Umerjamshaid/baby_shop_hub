@@ -5,13 +5,12 @@ import '../providers/cart_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/auth_provider.dart';
-import '../models/product_model.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
 import 'products_list_screen.dart';
 import 'orders_screen.dart';
-import 'product_detail_screen.dart';
 import 'advanced_search_screen.dart';
+import '../widgets/common/compact_product_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,9 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeContent(),
-    ProductsListScreen(
-      category: 'All',
-    ),
+    ProductsListScreen(category: 'All'),
     const CartScreen(),
     const ProfileScreen(),
     const OrdersScreen(),
@@ -197,9 +194,7 @@ class AdvancedSearchDelegate extends SearchDelegate {
         }
         final suggestions = snapshot.data!;
         if (suggestions.isEmpty) {
-          return Center(
-            child: Text('No suggestions for "$query"'),
-          );
+          return Center(child: Text('No suggestions for "$query"'));
         }
         return ListView.builder(
           itemCount: suggestions.length,
@@ -466,11 +461,7 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildCategoryCard(
-    BuildContext context,
-    String title,
-    String emoji,
-  ) {
+  Widget _buildCategoryCard(BuildContext context, String title, String emoji) {
     return GestureDetector(
       onTap: () {
         _navigateToProductsList(title);
@@ -496,142 +487,37 @@ class _HomeContentState extends State<HomeContent> {
   Widget _buildFeaturedProducts(ProductProvider productProvider) {
     final featuredProducts = productProvider.featuredProducts.take(4).toList();
     return SizedBox(
-      height: 280,
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: featuredProducts.length,
         itemBuilder: (context, index) {
           final product = featuredProducts[index];
-          return _buildProductItem(product);
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CompactProductCard(product: product),
+          );
         },
       ),
     );
   }
 
   Widget _buildRecommendedProducts(ProductProvider productProvider) {
-    final recommendedProducts = productProvider.recommendedProducts.take(6).toList();
+    final recommendedProducts = productProvider.recommendedProducts
+        .take(6)
+        .toList();
     return SizedBox(
-      height: 280,
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: recommendedProducts.length,
         itemBuilder: (context, index) {
           final product = recommendedProducts[index];
-          return _buildProductItem(product);
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CompactProductCard(product: product),
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildProductItem(Product product) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
-          ),
-        );
-      },
-      child: SizedBox(
-        width: 180,
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 150,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                  child: Image.network(
-                    product.firstImage,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.image, size: 40),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product.formattedPrice,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () {
-                          final cartProvider = Provider.of<CartProvider>(
-                            context,
-                            listen: false,
-                          );
-                          final authProvider = Provider.of<AuthProvider>(
-                            context,
-                            listen: false,
-                          );
-                          if (authProvider.currentUser != null) {
-                            cartProvider.addToCart(
-                              authProvider.currentUser!.id,
-                              product,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${product.name} added to cart'),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary,
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please log in to add items to cart',
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text('Add to Cart'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

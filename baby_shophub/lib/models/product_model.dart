@@ -231,27 +231,25 @@ class Product {
 
   // Computed properties
   String get firstImage {
-    if (imageUrls?.isNotEmpty == true && 
-        imageUrls!.first.isNotEmpty && 
+    if (imageUrls?.isNotEmpty == true &&
+        imageUrls!.first.isNotEmpty &&
         imageUrls!.first.startsWith('http')) {
       return imageUrls!.first;
     }
     // Return placeholder image based on category
     final categoryPlaceholders = {
-      'clothing': 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=400&h=400&fit=crop',
-      'toys': 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&h=400&fit=crop',
-      'feeding': 'https://images.unsplash.com/photo-1587049352846-4a222e784422?w=400&h=400&fit=crop',
-      'bath': 'https://images.unsplash.com/photo-1584555684040-bad07f3a8c17?w=400&h=400&fit=crop',
-      'sleep': 'https://images.unsplash.com/photo-1540479859555-17af45c78602?w=400&h=400&fit=crop',
-      'safety': 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&h=400&fit=crop',
-      'health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=400&fit=crop',
+      'clothing': 'assets/images/490shots_so.png',
+      'toys': 'assets/images/534shots_so.png',
+      'feeding': 'assets/images/700shots_so.png',
+      'bath': 'assets/images/851shots_so.png',
+      'sleep': 'assets/images/omen.jpg',
+      'safety': 'assets/images/490shots_so.png',
+      'health': 'assets/images/534shots_so.png',
     };
-    
-    final categoryKey = category.toLowerCase();
-    return categoryPlaceholders[categoryKey] ?? 
-           'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&h=400&fit=crop';
-  }
 
+    final categoryKey = category.toLowerCase();
+    return categoryPlaceholders[categoryKey] ?? 'assets/images/490shots_so.png';
+  }
 
   String get formattedPrice {
     final discountedPrice = price * (1 - (discountPercentage ?? 0) / 100);
