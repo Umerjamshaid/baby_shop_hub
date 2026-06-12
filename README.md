@@ -359,9 +359,9 @@ copies or substantial portions of the Software.
 ## 🙏 Acknowledgments
 
 ### Core Team
-- **Lead Developer**: [Your Name]
-- **UI/UX Designer**: [Designer Name]
-- **Project Manager**: [PM Name]
+- **Lead Developer**: @umerjamshaid
+- **UI/UX Designer**: Abdul hi
+- **Project Manager**: @manahil
 
 ### Technologies & Libraries
 - **Flutter Team**: For the incredible framework
