@@ -45,3 +45,13 @@ app.*.map.json
 /android/app/release
 /android/app/build/
 /android/build/
+
+# Sensitive configuration and API keys
+lib/firebase_options.dart
+firebase.json
+.env
+.env.local
+.env*.local
+google-services.json
+GoogleService-Info.plist
+/functions/
