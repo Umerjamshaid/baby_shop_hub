@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -40,7 +41,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.currentUser != null) {
-        _orders = await _orderService.getUserOrders(authProvider.currentUser!.id);
+        _orders = await _orderService.getUserOrders(
+          authProvider.currentUser!.id,
+        );
       }
     } catch (e) {
       _error = e.toString();
@@ -69,10 +72,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         title: const Text('My Orders'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadOrders,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
         ],
       ),
       body: _buildBody(),
@@ -84,11 +84,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.shopping_bag_outlined,
-            size: 64,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           const Text(
             'Please sign in to view your orders',
@@ -118,10 +114,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
 
     if (_error != null) {
-      return AppErrorWidget(
-        message: _error!,
-        onRetry: _loadOrders,
-      );
+      return AppErrorWidget(message: _error!, onRetry: _loadOrders);
     }
 
     if (_orders.isEmpty) {
@@ -180,112 +173,165 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildOrderCard(Order order) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderDetailScreen(order: order),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        // ignore: deprecated_member_use
+        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                // ignore: deprecated_member_use
+                Colors.white.withOpacity(0.6),
+                // ignore: deprecated_member_use
+                Colors.grey.withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Order Header
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Order #${order.id.substring(order.id.length - 6)}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: order.statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      order.status,
-                      style: TextStyle(
-                        color: order.statusColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              const SizedBox(height: 12),
-
-              // Order Details
-              Row(
+            ],
+          ),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OrderDetailScreen(order: order),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    DateFormat('MMM dd, yyyy').format(order.orderDate),
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.shopping_bag, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${order.itemCount} item${order.itemCount > 1 ? 's' : ''}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Order Total
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Total:',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    order.formattedTotalAmount,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Tracking Info (if available)
-              if (order.trackingNumber != null) ...[
-                const SizedBox(height: 12),
-                const Divider(),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.local_shipping, size: 16, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Tracking: ${order.trackingNumber}',
-                        style: const TextStyle(color: Colors.blue, fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
+                  // Order Header
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Order #${order.id.substring(order.id.length - 6)}',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                       ),
+                      Container(
+                        padding: EdgeInsets.symmetric(),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            // ignore: deprecated_member_use
+                            color: order.statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            child: Text(
+                              order.status,
+                              style: TextStyle(
+                                color: order.statusColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Order Details
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('MMM dd, yyyy').format(order.orderDate),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(
+                        Icons.shopping_bag,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${order.itemCount} item${order.itemCount > 1 ? 's' : ''}',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Order Total
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        order.formattedTotalAmount,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Tracking Info (if available)
+                  if (order.trackingNumber != null) ...[
+                    const SizedBox(height: 12),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.local_shipping,
+                          size: 16,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tracking: ${order.trackingNumber}',
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -297,11 +343,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.shopping_bag_outlined,
-            size: 64,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           const Text(
             'No orders yet',

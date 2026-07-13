@@ -24,6 +24,13 @@ BabyShopHub is a cutting-edge Flutter-based e-commerce mobile application design
 - **🌐 Real-Time Updates**: Live order tracking and notifications
 - **💳 Secure Payments**: Integrated payment processing (expandable)
 - **📊 Analytics**: Built-in insights for business intelligence
+## 🎨 UI Refresh
+
+- Updated product cards with a light, premium design using glass‑morphism and subtle gradients.
+- Retained **Add to Cart** button functionality.
+- Placeholder screenshot demonstrating the new card UI:
+
+![Product Card UI](https://via.placeholder.com/600x400?text=Product+Card+UI)
 
 ## 📱 Features
 

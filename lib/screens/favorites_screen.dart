@@ -24,7 +24,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   void _loadFavorites() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final favoritesProvider = Provider.of<FavoritesProvider>(
+      context,
+      listen: false,
+    );
 
     if (authProvider.currentUser != null) {
       favoritesProvider.loadUserFavorites(authProvider.currentUser!.id);
@@ -38,8 +41,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Favorites'),
+        elevation: 0,
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          "My Favorites",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+        ),
       ),
       body: authProvider.currentUser == null
           ? _buildLoginPrompt()
@@ -87,24 +96,30 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        _loadFavorites();
-      },
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.7,
-        ),
-        itemCount: favoritesProvider.favoriteProducts.length,
-        itemBuilder: (context, index) {
-          return ProductCard(
-            product: favoritesProvider.favoriteProducts[index],
-            showFavoriteButton: true,
-          );
-        },
+      onRefresh: () async => _loadFavorites(),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Products
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            sliver: SliverGrid(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return ProductCard(
+                  product: favoritesProvider.favoriteProducts[index],
+                  showFavoriteButton: true,
+                );
+              }, childCount: favoritesProvider.favoriteProducts.length),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                childAspectRatio:
+                    0.58, // Perfect mathematical ratio to fit everything
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

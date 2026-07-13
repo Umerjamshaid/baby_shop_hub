@@ -153,10 +153,23 @@ class _ProductCardState extends State<ProductCard>
       transform: _isHovered
           ? Matrix4.translationValues(0, -4, 0)
           : Matrix4.identity(),
-      child: Card(
-        elevation: _isHovered ? 8 : 4,
-        shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.grey.shade50],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: _isHovered ? 12 : 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade200),
+        ),
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -176,13 +189,16 @@ class _ProductCardState extends State<ProductCard>
           borderRadius: BorderRadius.circular(20),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final cardHeight = constraints.maxHeight.isFinite && constraints.maxHeight > 0
+              final cardHeight =
+                  constraints.maxHeight.isFinite && constraints.maxHeight > 0
                   ? constraints.maxHeight
                   : 320.0;
 
-              final imageHeight = cardHeight * 0.45;
-              final detailsPadding = cardHeight < 250 ? 8.0 : 16.0;
-              final spacingHeight = cardHeight < 250 ? 4.0 : 8.0;
+              // Image now takes LESS of the card (was 0.45) so the
+              // details column has more vertical space to work with.
+              final imageHeight = cardHeight * 0.36;
+              final detailsPadding = cardHeight < 250 ? 8.0 : 12.0;
+              final spacingHeight = cardHeight < 250 ? 3.0 : 6.0;
 
               return Container(
                 height: constraints.maxHeight.isFinite ? null : cardHeight,
@@ -198,30 +214,37 @@ class _ProductCardState extends State<ProductCard>
                   ),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product Image with badges
                     _buildImageSection(imageHeight),
 
-                    // Product Details
-                    Expanded(
-                      child: Padding(
+                    // Expanded + SingleChildScrollView acts as an overflow
+                    // safety net: if content is ever still too tall for a
+                    // given screen/font-scale, it scrolls instead of
+                    // throwing a yellow/black overflow banner.
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.all(detailsPadding),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Category and badges row
-                            Row(
+                            // Category & badges — capped to avoid a tall Wrap
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
                               children: [
                                 _buildCategoryBadge(),
-                                const Spacer(),
-                                if (widget.product.isFeatured == true && cardHeight >= 250)
+                                if (widget.product.isFeatured == true &&
+                                    cardHeight >= 280)
                                   _buildModernBadge(
                                     'TRENDING',
                                     Icons.trending_up,
                                     Colors.purple,
                                   ),
-                                if (_isNewProduct() && cardHeight >= 250)
+                                if (_isNewProduct() && cardHeight >= 320)
                                   _buildModernBadge(
                                     'NEW',
                                     Icons.new_releases,
@@ -229,37 +252,34 @@ class _ProductCardState extends State<ProductCard>
                                   ),
                               ],
                             ),
+
                             SizedBox(height: spacingHeight),
 
-                            // Product name
-                            Expanded(
-                              child: Text(
-                                widget.product.name,
-                                style: TextStyle(
-                                  fontSize: cardHeight < 250 ? 12 : 14,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.2,
-                                  letterSpacing: -0.3,
-                                  color: Colors.black87,
-                                ),
-                                maxLines: cardHeight < 250 ? 1 : 2,
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              widget.product.name,
+                              style: TextStyle(
+                                fontSize: cardHeight < 250 ? 12 : 13,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                                letterSpacing: -0.2,
+                                color: Colors.black87,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
+
                             SizedBox(height: spacingHeight),
 
-                            // Price and Rating Row
-                            _buildPriceRatingRow(cardHeight < 250),
-                            SizedBox(height: spacingHeight),
+                            _buildPriceRatingRow(cardHeight < 280),
 
-                            // Stock indicator
-                            if (cardHeight >= 250) ...[
+                            if (cardHeight >= 280) ...[
+                              SizedBox(height: spacingHeight),
                               _buildStockIndicator(),
-                              const Spacer(),
                             ],
 
-                            // Add to Cart Button
-                            _buildAddToCartButton(cardHeight < 250),
+                            SizedBox(height: spacingHeight),
+
+                            _buildAddToCartButton(cardHeight < 300),
                           ],
                         ),
                       ),
@@ -267,7 +287,7 @@ class _ProductCardState extends State<ProductCard>
                   ],
                 ),
               );
-            }
+            },
           ),
         ),
       ),
@@ -491,7 +511,7 @@ class _ProductCardState extends State<ProductCard>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(_isHovered ? 0.1 : 0.15),
+                    Colors.transparent,
                     Colors.transparent,
                     Colors.transparent,
                   ],
@@ -752,7 +772,10 @@ class _ProductCardState extends State<ProductCard>
                     decorationColor: Colors.grey.shade400,
                   ),
                 ),
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 2,
                 children: [
                   Text(
                     widget.product.formattedPrice,
@@ -763,8 +786,7 @@ class _ProductCardState extends State<ProductCard>
                       letterSpacing: -0.5,
                     ),
                   ),
-                  if ((widget.product.discountPercentage ?? 0) > 0 && !compact) ...[
-                    const SizedBox(width: 6),
+                  if ((widget.product.discountPercentage ?? 0) > 0 && !compact)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -784,7 +806,6 @@ class _ProductCardState extends State<ProductCard>
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
             ],
@@ -828,12 +849,15 @@ class _ProductCardState extends State<ProductCard>
                 ),
               ),
               if (!compact)
-                Text(
-                  ' (${widget.product.reviewCount})',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.amber.shade600,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    ' (${widget.product.reviewCount})',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.amber.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
